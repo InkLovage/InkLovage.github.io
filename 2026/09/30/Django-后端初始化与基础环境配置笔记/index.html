@@ -1,0 +1,799 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Django 后端初始化与基础环境配置笔记 | Ink Lovage</title><meta name="author" content="InkLovage"><meta name="copyright" content="InkLovage"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="记录 Django 前后端分离项目从依赖安装、项目初始化、App 创建，到数据库迁移、管理员创建、DRF 与 CORS 基础配置的完整流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django 后端初始化与基础环境配置笔记">
+<meta property="og:url" content="https://inklovage.github.io/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Ink Lovage">
+<meta property="og:description" content="记录 Django 前后端分离项目从依赖安装、项目初始化、App 创建，到数据库迁移、管理员创建、DRF 与 CORS 基础配置的完整流程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://inklovage.github.io/img/xiamu.jpg">
+<meta property="article:published_time" content="2026-09-30T04:45:00.000Z">
+<meta property="article:modified_time" content="2026-09-30T04:42:34.737Z">
+<meta property="article:author" content="InkLovage">
+<meta property="article:tag" content="CORS">
+<meta property="article:tag" content="DRF">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="JWT">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="前后端分离">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://inklovage.github.io/img/xiamu.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Django 后端初始化与基础环境配置笔记",
+  "url": "https://inklovage.github.io/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/",
+  "image": "https://inklovage.github.io/img/xiamu.jpg",
+  "datePublished": "2026-09-30T04:45:00.000Z",
+  "dateModified": "2026-09-30T04:42:34.737Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "InkLovage",
+      "url": "https://inklovage.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://inklovage.github.io/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Django 后端初始化与基础环境配置笔记',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"><style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.png);"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/banner.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Ink Lovage</span></a><a class="nav-page-title" href="/"><span class="site-name">Django 后端初始化与基础环境配置笔记</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">Django 后端初始化与基础环境配置笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-30T04:45:00.000Z" title="发表于 2026-09-30 12:45:00">2026-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-30T04:42:34.737Z" title="更新于 2026-09-30 12:42:34">2026-09-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/Django/">Django</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在使用 Django 搭建前后端分离项目时，通常不会只使用 Django 本身，而是会配合：</p>
+<ul>
+<li>Django REST Framework</li>
+<li>SimpleJWT</li>
+<li>django-cors-headers</li>
+</ul>
+<p>共同完成 REST API、JWT 身份认证以及跨域请求处理。</p>
+<p>本文记录一个 Django 后端项目从零开始的基础初始化过程。</p>
+<span id="more"></span>
+
+<h1 id="一、安装核心依赖"><a href="#一、安装核心依赖" class="headerlink" title="一、安装核心依赖"></a>一、安装核心依赖</h1><p>首先进入 Python 虚拟环境，然后安装项目需要的核心依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install django djangorestframework djangorestframework-simplejwt django-cors-headers</span><br></pre></td></tr></table></figure>
+
+<p>这四个包分别承担不同的职责：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Django</span><br><span class="line">│</span><br><span class="line">├── Django REST Framework</span><br><span class="line">│       └── 构建 REST API</span><br><span class="line">│</span><br><span class="line">├── SimpleJWT</span><br><span class="line">│       └── JWT 身份认证</span><br><span class="line">│</span><br><span class="line">└── django-cors-headers</span><br><span class="line">        └── 解决前后端跨域问题</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二、Django"><a href="#二、Django" class="headerlink" title="二、Django"></a>二、Django</h1><p>安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install django</span><br></pre></td></tr></table></figure>
+
+<p>Django 是整个后端项目的核心 Web 框架。</p>
+<p>它负责：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">路由分发</span><br><span class="line">数据库 ORM</span><br><span class="line">请求处理</span><br><span class="line">响应处理</span><br><span class="line">用户认证</span><br><span class="line">后台管理</span><br><span class="line">中间件</span><br><span class="line">服务器逻辑</span><br></pre></td></tr></table></figure>
+
+<p>例如我们可以通过 Django ORM 使用 Python 代码操作数据库：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">User.objects.<span class="built_in">all</span>()</span><br></pre></td></tr></table></figure>
+
+<p>而不需要直接写：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">user</span>;</span><br></pre></td></tr></table></figure>
+
+<p>所以 ORM 可以简单理解为：</p>
+<blockquote>
+<p>使用 Python 对象和代码操作关系型数据库。</p>
+</blockquote>
+<hr>
+<h1 id="三、Django-REST-Framework"><a href="#三、Django-REST-Framework" class="headerlink" title="三、Django REST Framework"></a>三、Django REST Framework</h1><p>安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install djangorestframework</span><br></pre></td></tr></table></figure>
+
+<p>通常简称：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DRF</span><br></pre></td></tr></table></figure>
+
+<p>全称：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Django REST Framework</span><br></pre></td></tr></table></figure>
+
+<p>Django 原本更偏向传统 Web 开发，而 DRF 是专门用于构建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RESTful API</span><br></pre></td></tr></table></figure>
+
+<p>的扩展框架。</p>
+<p>在前后端分离架构中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Vue / React</span><br><span class="line">      │</span><br><span class="line">      │ HTTP</span><br><span class="line">      ▼</span><br><span class="line"> Django REST API</span><br><span class="line">      │</span><br><span class="line">      ▼</span><br><span class="line">    数据库</span><br></pre></td></tr></table></figure>
+
+<p>前端通常需要的是 JSON 数据，而不是 Django 渲染出来的 HTML 页面。</p>
+<p>例如后端返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;username&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Tom&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;email&quot;</span><span class="punctuation">:</span> <span class="string">&quot;example@example.com&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>DRF 最重要的功能之一就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Django Model</span><br><span class="line">      ↓</span><br><span class="line">Serializer</span><br><span class="line">      ↓</span><br><span class="line">JSON</span><br><span class="line">      ↓</span><br><span class="line">前端</span><br></pre></td></tr></table></figure>
+
+<p>这个过程叫：</p>
+<blockquote>
+<p>序列化（Serialization）。</p>
+</blockquote>
+<p>反过来，也可以将前端发送的 JSON 数据转换成 Django 可以处理的数据。</p>
+<hr>
+<h1 id="四、djangorestframework-simplejwt"><a href="#四、djangorestframework-simplejwt" class="headerlink" title="四、djangorestframework-simplejwt"></a>四、djangorestframework-simplejwt</h1><p>安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install djangorestframework-simplejwt</span><br></pre></td></tr></table></figure>
+
+<p>它主要用于实现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JWT 身份认证</span><br></pre></td></tr></table></figure>
+
+<p>JWT 全称：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JSON Web Token</span><br></pre></td></tr></table></figure>
+
+<p>在前后端分离项目中，用户登录成功以后，后端通常向前端返回：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">+</span><br><span class="line">Refresh Token</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;access&quot;</span><span class="punctuation">:</span> <span class="string">&quot;xxxxxxxx&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;refresh&quot;</span><span class="punctuation">:</span> <span class="string">&quot;xxxxxxxx&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>前端以后请求需要认证的接口时，在 HTTP Header 中携带：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer &lt;Access Token&gt;</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer eyJhbGciOiJIUzI1NiIs...</span><br></pre></td></tr></table></figure>
+
+<p>后端验证 Token 后，就可以判断：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">这个请求是谁发送的</span><br><span class="line">        +</span><br><span class="line">用户是否已经登录</span><br><span class="line">        +</span><br><span class="line">用户是否有权限访问接口</span><br></pre></td></tr></table></figure>
+
+<p>相比传统的 Session 认证方式，JWT 非常适合：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Vue</span><br><span class="line">React</span><br><span class="line">App</span><br><span class="line">小程序</span><br><span class="line">前后端分离系统</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="五、django-cors-headers"><a href="#五、django-cors-headers" class="headerlink" title="五、django-cors-headers"></a>五、django-cors-headers</h1><p>安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install django-cors-headers</span><br></pre></td></tr></table></figure>
+
+<p>这个库用于解决：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CORS 跨域问题</span><br></pre></td></tr></table></figure>
+
+<p>CORS 全称：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Cross-Origin Resource Sharing</span><br></pre></td></tr></table></figure>
+
+<p>即：</p>
+<blockquote>
+<p>跨域资源共享。</p>
+</blockquote>
+<hr>
+<h1 id="六、为什么前后端分离会产生跨域问题？"><a href="#六、为什么前后端分离会产生跨域问题？" class="headerlink" title="六、为什么前后端分离会产生跨域问题？"></a>六、为什么前后端分离会产生跨域问题？</h1><p>假设开发环境中：</p>
+<p>前端 Vue：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:5173</span><br></pre></td></tr></table></figure>
+
+<p>Django 后端：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8000</span><br></pre></td></tr></table></figure>
+
+<p>虽然它们都运行在本机，但：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">5173 ≠ 8000</span><br></pre></td></tr></table></figure>
+
+<p>端口不同，因此属于不同的 Origin。</p>
+<p>浏览器的同源策略会检查：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">协议</span><br><span class="line">+</span><br><span class="line">域名</span><br><span class="line">+</span><br><span class="line">端口</span><br></pre></td></tr></table></figure>
+
+<p>三者只要有一个不同，就可能构成跨域。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:5173</span><br><span class="line">http://localhost:8000</span><br></pre></td></tr></table></figure>
+
+<p>端口不同：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">5173 ≠ 8000</span><br></pre></td></tr></table></figure>
+
+<p>因此属于跨域请求。</p>
+<p>浏览器可能阻止：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Vue</span><br><span class="line"> ↓</span><br><span class="line">Django API</span><br></pre></td></tr></table></figure>
+
+<p>此时就需要：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">django-cors-headers</span><br></pre></td></tr></table></figure>
+
+<p>由 Django 返回相应的 CORS HTTP Header，告诉浏览器：</p>
+<blockquote>
+<p>允许这个前端地址访问我的 API。</p>
+</blockquote>
+<hr>
+<h1 id="七、创建-Django-项目"><a href="#七、创建-Django-项目" class="headerlink" title="七、创建 Django 项目"></a>七、创建 Django 项目</h1><p>安装好依赖之后，开始初始化 Django 项目。</p>
+<p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">django-admin startproject backend</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend</span><br></pre></td></tr></table></figure>
+
+<p>是项目名称。</p>
+<p>执行完成后，一般会得到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">backend/</span><br><span class="line">│</span><br><span class="line">├── manage.py</span><br><span class="line">│</span><br><span class="line">└── backend/</span><br><span class="line">    ├── __init__.py</span><br><span class="line">    ├── settings.py</span><br><span class="line">    ├── urls.py</span><br><span class="line">    ├── asgi.py</span><br><span class="line">    └── wsgi.py</span><br></pre></td></tr></table></figure>
+
+<p>这里很容易看到两个：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend</span><br></pre></td></tr></table></figure>
+
+<p>实际上它们不是同一个东西。</p>
+<p>外层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend/</span><br></pre></td></tr></table></figure>
+
+<p>是整个项目目录。</p>
+<p>内层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend/backend/</span><br></pre></td></tr></table></figure>
+
+<p>是 Django 项目的 Python 配置包。</p>
+<hr>
+<h1 id="八、settings-py"><a href="#八、settings-py" class="headerlink" title="八、settings.py"></a>八、settings.py</h1><p>文件位置：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend/backend/settings.py</span><br></pre></td></tr></table></figure>
+
+<p>它是整个 Django 项目最重要的配置文件之一。</p>
+<p>很多全局配置都放在这里，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">数据库</span><br><span class="line">App</span><br><span class="line">中间件</span><br><span class="line">JWT</span><br><span class="line">DRF</span><br><span class="line">CORS</span><br><span class="line">语言</span><br><span class="line">时区</span><br><span class="line">静态文件</span><br></pre></td></tr></table></figure>
+
+<p>之后项目的大量配置都会修改这个文件。</p>
+<hr>
+<h1 id="九、urls-py"><a href="#九、urls-py" class="headerlink" title="九、urls.py"></a>九、urls.py</h1><p>文件位置：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend/backend/urls.py</span><br></pre></td></tr></table></figure>
+
+<p>主要负责：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">URL 路由</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/api/login/</span><br><span class="line">/api/users/</span><br><span class="line">/api/articles/</span><br></pre></td></tr></table></figure>
+
+<p>最终都会通过路由系统找到对应的后端代码。</p>
+<p>可以简单理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">浏览器请求 URL</span><br><span class="line">       ↓</span><br><span class="line">    urls.py</span><br><span class="line">       ↓</span><br><span class="line">找到对应 View</span><br><span class="line">       ↓</span><br><span class="line">执行后端逻辑</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十、进入项目根目录"><a href="#十、进入项目根目录" class="headerlink" title="十、进入项目根目录"></a>十、进入项目根目录</h1><p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> backend</span><br></pre></td></tr></table></figure>
+
+<p>进入刚刚创建的 Django 项目。</p>
+<p>此时终端应该位于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.../backend/</span><br></pre></td></tr></table></figure>
+
+<p>当前目录下应该能够看到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">manage.py</span><br></pre></td></tr></table></figure>
+
+<p>以后大量 Django 命令都需要通过：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py ...</span><br></pre></td></tr></table></figure>
+
+<p>执行。</p>
+<hr>
+<h1 id="十一、创建业务-App"><a href="#十一、创建业务-App" class="headerlink" title="十一、创建业务 App"></a>十一、创建业务 App</h1><p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py startapp web</span><br></pre></td></tr></table></figure>
+
+<p>也可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">django-admin startapp web</span><br></pre></td></tr></table></figure>
+
+<p>不过进入 Django 项目以后，一般习惯写：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py startapp web</span><br></pre></td></tr></table></figure>
+
+<p>执行完成后，项目结构大概变为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">backend/</span><br><span class="line">│</span><br><span class="line">├── manage.py</span><br><span class="line">│</span><br><span class="line">├── db.sqlite3</span><br><span class="line">│</span><br><span class="line">├── backend/</span><br><span class="line">│   ├── settings.py</span><br><span class="line">│   ├── urls.py</span><br><span class="line">│   └── ...</span><br><span class="line">│</span><br><span class="line">└── web/</span><br><span class="line">    ├── migrations/</span><br><span class="line">    ├── __init__.py</span><br><span class="line">    ├── admin.py</span><br><span class="line">    ├── apps.py</span><br><span class="line">    ├── models.py</span><br><span class="line">    ├── tests.py</span><br><span class="line">    └── views.py</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十二、Project-和-App-的关系"><a href="#十二、Project-和-App-的关系" class="headerlink" title="十二、Project 和 App 的关系"></a>十二、Project 和 App 的关系</h1><p>这是 Django 中一个非常重要的概念。</p>
+<p>Django 采用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Project</span><br><span class="line">   │</span><br><span class="line">   ├── App</span><br><span class="line">   ├── App</span><br><span class="line">   ├── App</span><br><span class="line">   └── App</span><br></pre></td></tr></table></figure>
+
+<p>的项目结构。</p>
+<p>Project 可以理解为：</p>
+<blockquote>
+<p>整个网站或者整个后端系统。</p>
+</blockquote>
+<p>App 则可以理解为：</p>
+<blockquote>
+<p>某一类具体业务功能。</p>
+</blockquote>
+<p>例如以后项目变大以后，可以有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">backend</span><br><span class="line">│</span><br><span class="line">├── users</span><br><span class="line">│     └── 用户相关功能</span><br><span class="line">│</span><br><span class="line">├── article</span><br><span class="line">│     └── 文章相关功能</span><br><span class="line">│</span><br><span class="line">├── chat</span><br><span class="line">│     └── 聊天功能</span><br><span class="line">│</span><br><span class="line">└── web</span><br><span class="line">      └── Web API</span><br></pre></td></tr></table></figure>
+
+<p>这样可以把不同业务拆分开来。</p>
+<hr>
+<h1 id="十三、App-中的重要文件"><a href="#十三、App-中的重要文件" class="headerlink" title="十三、App 中的重要文件"></a>十三、App 中的重要文件</h1><p>创建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">web</span><br></pre></td></tr></table></figure>
+
+<p>App 后，会自动生成几个文件。</p>
+<h2 id="models-py"><a href="#models-py" class="headerlink" title="models.py"></a>models.py</h2><p>主要用于定义：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">数据库模型</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db <span class="keyword">import</span> models</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Article</span>(models.Model):</span><br><span class="line">    title = models.CharField(max_length=<span class="number">100</span>)</span><br><span class="line">    content = models.TextField()</span><br></pre></td></tr></table></figure>
+
+<p>Django 可以根据这个 Python 类自动创建对应的数据表。</p>
+<hr>
+<h2 id="views-py"><a href="#views-py" class="headerlink" title="views.py"></a>views.py</h2><p>主要用于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">处理请求</span><br><span class="line">返回响应</span><br><span class="line">编写 API 业务逻辑</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.http <span class="keyword">import</span> JsonResponse</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">hello</span>(<span class="params">request</span>):</span><br><span class="line">    <span class="keyword">return</span> JsonResponse(&#123;</span><br><span class="line">        <span class="string">&quot;message&quot;</span>: <span class="string">&quot;Hello Django&quot;</span></span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="admin-py"><a href="#admin-py" class="headerlink" title="admin.py"></a>admin.py</h2><p>用于将数据库模型注册到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Django Admin</span><br></pre></td></tr></table></figure>
+
+<p>后台管理系统。</p>
+<hr>
+<h2 id="migrations"><a href="#migrations" class="headerlink" title="migrations&#x2F;"></a>migrations&#x2F;</h2><p>用于保存：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">数据库迁移文件</span><br></pre></td></tr></table></figure>
+
+<p>当数据库模型发生变化时，Django 会通过 migration 记录数据库结构变化。</p>
+<hr>
+<h1 id="十四、注册-App"><a href="#十四、注册-App" class="headerlink" title="十四、注册 App"></a>十四、注册 App</h1><p>创建 App 并不意味着 Django 自动开始使用它。</p>
+<p>还需要打开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backend/settings.py</span><br></pre></td></tr></table></figure>
+
+<p>找到：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;web&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>或者：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;web.apps.WebConfig&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>这样 Django 才知道：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">web</span><br></pre></td></tr></table></figure>
+
+<p>是当前项目中的一个应用。</p>
+<hr>
+<h1 id="十五、注册-Django-REST-Framework"><a href="#十五、注册-Django-REST-Framework" class="headerlink" title="十五、注册 Django REST Framework"></a>十五、注册 Django REST Framework</h1><p>同样在：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS</span><br></pre></td></tr></table></figure>
+
+<p>中加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;rest_framework&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>完整一点：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    <span class="string">&#x27;django.contrib.admin&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.auth&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.contenttypes&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.sessions&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.messages&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.staticfiles&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;rest_framework&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;web&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十六、注册-CORS"><a href="#十六、注册-CORS" class="headerlink" title="十六、注册 CORS"></a>十六、注册 CORS</h1><p>安装：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">django-cors-headers</span><br></pre></td></tr></table></figure>
+
+<p>以后，还需要在：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS</span><br></pre></td></tr></table></figure>
+
+<p>中加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;corsheaders&#x27;</span>,</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    <span class="string">&#x27;django.contrib.admin&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.auth&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.contenttypes&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.sessions&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.messages&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.staticfiles&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;rest_framework&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;corsheaders&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;web&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十七、添加-CORS-中间件"><a href="#十七、添加-CORS-中间件" class="headerlink" title="十七、添加 CORS 中间件"></a>十七、添加 CORS 中间件</h1><p>继续在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">settings.py</span><br></pre></td></tr></table></figure>
+
+<p>找到：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MIDDLEWARE</span><br></pre></td></tr></table></figure>
+
+<p>加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;corsheaders.middleware.CorsMiddleware&#x27;</span>,</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">MIDDLEWARE = [</span><br><span class="line">    <span class="string">&#x27;django.middleware.security.SecurityMiddleware&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;corsheaders.middleware.CorsMiddleware&#x27;</span>,</span><br><span class="line"></span><br><span class="line">    <span class="string">&#x27;django.contrib.sessions.middleware.SessionMiddleware&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.middleware.common.CommonMiddleware&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.middleware.csrf.CsrfViewMiddleware&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.auth.middleware.AuthenticationMiddleware&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.contrib.messages.middleware.MessageMiddleware&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;django.middleware.clickjacking.XFrameOptionsMiddleware&#x27;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>通常应该让：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CorsMiddleware</span><br></pre></td></tr></table></figure>
+
+<p>处于比较靠前的位置。</p>
+<p>尤其应放在：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CommonMiddleware</span><br></pre></td></tr></table></figure>
+
+<p>之前。</p>
+<hr>
+<h1 id="十八、配置允许的前端地址"><a href="#十八、配置允许的前端地址" class="headerlink" title="十八、配置允许的前端地址"></a>十八、配置允许的前端地址</h1><p>开发阶段如果 Vue 使用 Vite，一般运行在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:5173</span><br></pre></td></tr></table></figure>
+
+<p>可以在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">settings.py</span><br></pre></td></tr></table></figure>
+
+<p>加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CORS_ALLOWED_ORIGINS = [</span><br><span class="line">    <span class="string">&quot;http://localhost:5173&quot;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>如果前端通过：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1</span><br></pre></td></tr></table></figure>
+
+<p>访问，也可以加入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">CORS_ALLOWED_ORIGINS = [</span><br><span class="line">    <span class="string">&quot;http://localhost:5173&quot;</span>,</span><br><span class="line">    <span class="string">&quot;http://127.0.0.1:5173&quot;</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>这样 Django 就允许这些前端地址发送跨域请求。</p>
+<p>开发测试阶段也可能看到：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CORS_ALLOW_ALL_ORIGINS = <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<p>意思是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">允许所有来源访问</span><br></pre></td></tr></table></figure>
+
+<p>测试比较方便，但正式生产环境一般不建议直接允许所有来源。</p>
+<hr>
+<h1 id="十九、数据库迁移"><a href="#十九、数据库迁移" class="headerlink" title="十九、数据库迁移"></a>十九、数据库迁移</h1><p>完成基础配置后执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py migrate</span><br></pre></td></tr></table></figure>
+
+<p>这个命令会执行 Django 已有的数据库迁移。</p>
+<p>默认情况下 Django 使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SQLite</span><br></pre></td></tr></table></figure>
+
+<p>因此项目目录中会生成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.sqlite3</span><br></pre></td></tr></table></figure>
+
+<p>大致结构：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">backend/</span><br><span class="line">│</span><br><span class="line">├── manage.py</span><br><span class="line">├── db.sqlite3</span><br><span class="line">├── backend/</span><br><span class="line">└── web/</span><br></pre></td></tr></table></figure>
+
+<p>Django 会自动创建一些系统表，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">用户</span><br><span class="line">用户组</span><br><span class="line">权限</span><br><span class="line">Session</span><br><span class="line">Admin 日志</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十、什么是数据库迁移？"><a href="#二十、什么是数据库迁移？" class="headerlink" title="二十、什么是数据库迁移？"></a>二十、什么是数据库迁移？</h1><p>Django 不推荐直接手动修改数据库表结构，而是通过：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Migration</span><br></pre></td></tr></table></figure>
+
+<p>管理数据库结构。</p>
+<p>基本关系：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">models.py</span><br><span class="line">    ↓</span><br><span class="line">makemigrations</span><br><span class="line">    ↓</span><br><span class="line">生成迁移文件</span><br><span class="line">    ↓</span><br><span class="line">migrate</span><br><span class="line">    ↓</span><br><span class="line">修改数据库</span><br></pre></td></tr></table></figure>
+
+<p>以后如果自己创建了 Model，例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">UserProfile</span>(models.Model):</span><br><span class="line">    nickname = models.CharField(max_length=<span class="number">50</span>)</span><br></pre></td></tr></table></figure>
+
+<p>通常需要执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py makemigrations</span><br></pre></td></tr></table></figure>
+
+<p>然后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py migrate</span><br></pre></td></tr></table></figure>
+
+<p>可以记成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">makemigrations</span><br><span class="line">      ↓</span><br><span class="line">生成“修改数据库的方案”</span><br><span class="line"></span><br><span class="line">migrate</span><br><span class="line">      ↓</span><br><span class="line">真正执行这个方案</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十一、创建超级管理员"><a href="#二十一、创建超级管理员" class="headerlink" title="二十一、创建超级管理员"></a>二十一、创建超级管理员</h1><p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py createsuperuser</span><br></pre></td></tr></table></figure>
+
+<p>Django 会提示输入：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Username:</span><br><span class="line">Email address:</span><br><span class="line">Password:</span><br><span class="line">Password (again):</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Username: admin</span><br><span class="line">Email address: admin@example.com</span><br><span class="line">Password:</span><br><span class="line">Password (again):</span><br></pre></td></tr></table></figure>
+
+<p>创建成功以后，该账号拥有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Superuser</span><br></pre></td></tr></table></figure>
+
+<p>权限。</p>
+<hr>
+<h1 id="二十二、Django-Admin"><a href="#二十二、Django-Admin" class="headerlink" title="二十二、Django Admin"></a>二十二、Django Admin</h1><p>Django 自带一个后台管理系统：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/admin/</span><br></pre></td></tr></table></figure>
+
+<p>启动服务器以后访问：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8000/admin/</span><br></pre></td></tr></table></figure>
+
+<p>使用刚刚创建的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">用户名</span><br><span class="line">+</span><br><span class="line">密码</span><br></pre></td></tr></table></figure>
+
+<p>登录。</p>
+<p>进入以后就可以通过网页管理：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">用户</span><br><span class="line">用户组</span><br><span class="line">权限</span><br><span class="line">自定义数据库模型</span><br></pre></td></tr></table></figure>
+
+<p>这也是 Django 相比很多其他后端框架非常方便的一点。</p>
+<hr>
+<h1 id="二十三、启动开发服务器"><a href="#二十三、启动开发服务器" class="headerlink" title="二十三、启动开发服务器"></a>二十三、启动开发服务器</h1><p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py runserver</span><br></pre></td></tr></table></figure>
+
+<p>如果启动成功，一般会看到类似：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Starting development server at http://127.0.0.1:8000/</span><br></pre></td></tr></table></figure>
+
+<p>浏览器访问：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8000/</span><br></pre></td></tr></table></figure>
+
+<p>如果看到 Django 页面，就说明：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Django 后端成功运行</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十四、runserver-到底做了什么？"><a href="#二十四、runserver-到底做了什么？" class="headerlink" title="二十四、runserver 到底做了什么？"></a>二十四、runserver 到底做了什么？</h1><p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python manage.py runserver</span><br></pre></td></tr></table></figure>
+
+<p>以后，实际上是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Python</span><br><span class="line">  ↓</span><br><span class="line">启动 Django</span><br><span class="line">  ↓</span><br><span class="line">读取 settings.py</span><br><span class="line">  ↓</span><br><span class="line">读取 urls.py</span><br><span class="line">  ↓</span><br><span class="line">启动开发 Web Server</span><br><span class="line">  ↓</span><br><span class="line">监听 8000 端口</span><br></pre></td></tr></table></figure>
+
+<p>此时：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8000/</span><br></pre></td></tr></table></figure>
+
+<p>中的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1</span><br></pre></td></tr></table></figure>
+
+<p>表示：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">本机</span><br></pre></td></tr></table></figure>
+
+<p>而：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">8000</span><br></pre></td></tr></table></figure>
+
+<p>是 Django 默认开发服务器使用的端口。</p>
+<hr>
+<h1 id="二十五、完整初始化流程"><a href="#二十五、完整初始化流程" class="headerlink" title="二十五、完整初始化流程"></a>二十五、完整初始化流程</h1><p>整个 Django 项目初始化过程可以总结成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">安装依赖</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">django-admin startproject backend</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">cd backend</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">python manage.py startapp web</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">注册 web</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">注册 rest_framework</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">注册 corsheaders</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">配置 CorsMiddleware</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">配置允许的前端 Origin</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">python manage.py migrate</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">python manage.py createsuperuser</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">python manage.py runserver</span><br></pre></td></tr></table></figure>
+
+<p>对应命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">pip install django djangorestframework djangorestframework-simplejwt django-cors-headers</span><br><span class="line"></span><br><span class="line">django-admin startproject backend</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> backend</span><br><span class="line"></span><br><span class="line">python manage.py startapp web</span><br><span class="line"></span><br><span class="line">python manage.py migrate</span><br><span class="line"></span><br><span class="line">python manage.py createsuperuser</span><br><span class="line"></span><br><span class="line">python manage.py runserver</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十六、基础项目目录结构"><a href="#二十六、基础项目目录结构" class="headerlink" title="二十六、基础项目目录结构"></a>二十六、基础项目目录结构</h1><p>完成上述初始化以后，项目大致如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">backend/</span><br><span class="line">│</span><br><span class="line">├── manage.py</span><br><span class="line">│</span><br><span class="line">├── db.sqlite3</span><br><span class="line">│</span><br><span class="line">├── backend/</span><br><span class="line">│   ├── __init__.py</span><br><span class="line">│   ├── settings.py</span><br><span class="line">│   ├── urls.py</span><br><span class="line">│   ├── asgi.py</span><br><span class="line">│   └── wsgi.py</span><br><span class="line">│</span><br><span class="line">└── web/</span><br><span class="line">    ├── migrations/</span><br><span class="line">    │   └── __init__.py</span><br><span class="line">    ├── __init__.py</span><br><span class="line">    ├── admin.py</span><br><span class="line">    ├── apps.py</span><br><span class="line">    ├── models.py</span><br><span class="line">    ├── tests.py</span><br><span class="line">    └── views.py</span><br></pre></td></tr></table></figure>
+
+<p>其中最值得记住的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">manage.py</span><br><span class="line">    ↓</span><br><span class="line">Django 项目管理入口</span><br><span class="line"></span><br><span class="line">settings.py</span><br><span class="line">    ↓</span><br><span class="line">全局配置</span><br><span class="line"></span><br><span class="line">urls.py</span><br><span class="line">    ↓</span><br><span class="line">总路由</span><br><span class="line"></span><br><span class="line">models.py</span><br><span class="line">    ↓</span><br><span class="line">数据库模型</span><br><span class="line"></span><br><span class="line">views.py</span><br><span class="line">    ↓</span><br><span class="line">请求处理 / API 业务逻辑</span><br><span class="line"></span><br><span class="line">admin.py</span><br><span class="line">    ↓</span><br><span class="line">后台管理</span><br><span class="line"></span><br><span class="line">migrations/</span><br><span class="line">    ↓</span><br><span class="line">数据库迁移记录</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十七、前后端分离后的整体结构"><a href="#二十七、前后端分离后的整体结构" class="headerlink" title="二十七、前后端分离后的整体结构"></a>二十七、前后端分离后的整体结构</h1><p>当 Django 和 Vue 配合以后，整个系统可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">         浏览器</span><br><span class="line">           │</span><br><span class="line">           ▼</span><br><span class="line">       Vue 前端</span><br><span class="line">   localhost:5173</span><br><span class="line">           │</span><br><span class="line">      HTTP / JSON</span><br><span class="line">           │</span><br><span class="line">           ▼</span><br><span class="line">       CORS 检查</span><br><span class="line">           │</span><br><span class="line">           ▼</span><br><span class="line">      Django DRF</span><br><span class="line">   127.0.0.1:8000</span><br><span class="line">           │</span><br><span class="line">   ┌───────┴────────┐</span><br><span class="line">   │                │</span><br><span class="line">   ▼                ▼</span><br><span class="line"> JWT              ORM</span><br><span class="line">   │                │</span><br><span class="line">   ▼                ▼</span><br><span class="line">用户认证           数据库</span><br></pre></td></tr></table></figure>
+
+<p>各个组件的职责非常清楚：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Vue</span><br><span class="line">↓</span><br><span class="line">负责页面和用户交互</span><br><span class="line"></span><br><span class="line">DRF</span><br><span class="line">↓</span><br><span class="line">负责 REST API</span><br><span class="line"></span><br><span class="line">SimpleJWT</span><br><span class="line">↓</span><br><span class="line">负责用户认证</span><br><span class="line"></span><br><span class="line">django-cors-headers</span><br><span class="line">↓</span><br><span class="line">负责解决跨域</span><br><span class="line"></span><br><span class="line">Django ORM</span><br><span class="line">↓</span><br><span class="line">负责数据库操作</span><br><span class="line"></span><br><span class="line">SQLite / MySQL / PostgreSQL</span><br><span class="line">↓</span><br><span class="line">负责数据持久化</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="二十八、总结"><a href="#二十八、总结" class="headerlink" title="二十八、总结"></a>二十八、总结</h1><p>一个基础的 Django 前后端分离后端，核心可以分成四层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Django</span><br><span class="line">    ↓</span><br><span class="line">后端基础框架</span><br><span class="line"></span><br><span class="line">Django REST Framework</span><br><span class="line">    ↓</span><br><span class="line">API 层</span><br><span class="line"></span><br><span class="line">SimpleJWT</span><br><span class="line">    ↓</span><br><span class="line">身份认证层</span><br><span class="line"></span><br><span class="line">django-cors-headers</span><br><span class="line">    ↓</span><br><span class="line">前后端跨域通信</span><br></pre></td></tr></table></figure>
+
+<p>初始化项目时最核心的流程为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">创建 Project</span><br><span class="line">      ↓</span><br><span class="line">创建 App</span><br><span class="line">      ↓</span><br><span class="line">注册 App 和第三方组件</span><br><span class="line">      ↓</span><br><span class="line">配置 Middleware</span><br><span class="line">      ↓</span><br><span class="line">数据库迁移</span><br><span class="line">      ↓</span><br><span class="line">创建管理员</span><br><span class="line">      ↓</span><br><span class="line">启动服务器</span><br></pre></td></tr></table></figure>
+
+<p>完成这些工作以后，Django 后端的基础开发环境就已经搭建完成。</p>
+<p>接下来就可以继续实现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">数据库 Model</span><br><span class="line">    ↓</span><br><span class="line">Serializer</span><br><span class="line">    ↓</span><br><span class="line">View</span><br><span class="line">    ↓</span><br><span class="line">URL</span><br><span class="line">    ↓</span><br><span class="line">REST API</span><br><span class="line">    ↓</span><br><span class="line">JWT 登录认证</span><br><span class="line">    ↓</span><br><span class="line">Vue 调用后端接口</span><br></pre></td></tr></table></figure>
+
+<p>这也是一个 Django + Vue 前后端分离项目从初始化进入正式业务开发的基本路线。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://inklovage.github.io">InkLovage</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://inklovage.github.io/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/">https://inklovage.github.io/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://inklovage.github.io" target="_blank">Ink Lovage</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Django/">Django</a><a class="post-meta__tags" href="/tags/DRF/">DRF</a><a class="post-meta__tags" href="/tags/JWT/">JWT</a><a class="post-meta__tags" href="/tags/CORS/">CORS</a><a class="post-meta__tags" href="/tags/Python/">Python</a><a class="post-meta__tags" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB/">前后端分离</a></div><div class="post-share"><div class="social-share" data-image="/img/xiamu.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">JWT 双 Token 机制与无感刷新原理解析</div></div><div class="info-2"><div class="info-item-1">在前后端分离项目中，我们经常会使用 JWT（JSON Web Token） 完成用户身份认证。 但是，如果只使用一个 Token，就会遇到一个非常典型的问题：  Token 的有效期到底应该设置多长？  设置得太长不安全，设置得太短用户又需要频繁重新登录。 为了解决这个矛盾，实际项目中通常会采用：  Access Token + Refresh Token 双 Token 机制  本文记录一下双 Token 的基本原理，以及前端如何利用 Refresh Token 实现 JWT 的“无感刷新”。   一、为什么需要双 Token？假设我们的系统中只有一个 JWT Token。 如果将它的有效期设置为： 130 天  那么用户登录一次之后，未来 30 天都不需要重新登录。 体验很好，但是安全性存在问题。 如果这个 Token 在某一天被攻击者窃取，那么在 Token 失效之前，攻击者都可能利用它伪造用户身份访问系统。 也就是说： 12345Token 有效期越长        ↓用户体验越好        ↓Token 被盗后的风险窗口越长  反过来，如果我们把 Token 设置为...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-30</div><div class="info-item-2">JWT 双 Token 机制与无感刷新原理解析</div></div><div class="info-2"><div class="info-item-1">在前后端分离项目中，我们经常会使用 JWT（JSON Web Token） 完成用户身份认证。 但是，如果只使用一个 Token，就会遇到一个非常典型的问题：  Token 的有效期到底应该设置多长？  设置得太长不安全，设置得太短用户又需要频繁重新登录。 为了解决这个矛盾，实际项目中通常会采用：  Access Token + Refresh Token 双 Token 机制  本文记录一下双 Token 的基本原理，以及前端如何利用 Refresh Token 实现 JWT 的“无感刷新”。   一、为什么需要双 Token？假设我们的系统中只有一个 JWT Token。 如果将它的有效期设置为： 130 天  那么用户登录一次之后，未来 30 天都不需要重新登录。 体验很好，但是安全性存在问题。 如果这个 Token 在某一天被攻击者窃取，那么在 Token 失效之前，攻击者都可能利用它伪造用户身份访问系统。 也就是说： 12345Token 有效期越长        ↓用户体验越好        ↓Token 被盗后的风险窗口越长  反过来，如果我们把 Token 设置为...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/xiamu.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">InkLovage</div><div class="author-info-description">欢迎来到墨江离的个人博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">19</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/InkLovage"><i class="fab fa-github"></i><span>我的 GitHub</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Ink Lovage 的个人博客！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%AE%89%E8%A3%85%E6%A0%B8%E5%BF%83%E4%BE%9D%E8%B5%96"><span class="toc-number">1.</span> <span class="toc-text">一、安装核心依赖</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Django"><span class="toc-number">2.</span> <span class="toc-text">二、Django</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81Django-REST-Framework"><span class="toc-number">3.</span> <span class="toc-text">三、Django REST Framework</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81djangorestframework-simplejwt"><span class="toc-number">4.</span> <span class="toc-text">四、djangorestframework-simplejwt</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81django-cors-headers"><span class="toc-number">5.</span> <span class="toc-text">五、django-cors-headers</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB%E4%BC%9A%E4%BA%A7%E7%94%9F%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">六、为什么前后端分离会产生跨域问题？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%88%9B%E5%BB%BA-Django-%E9%A1%B9%E7%9B%AE"><span class="toc-number">7.</span> <span class="toc-text">七、创建 Django 项目</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AB%E3%80%81settings-py"><span class="toc-number">8.</span> <span class="toc-text">八、settings.py</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B9%9D%E3%80%81urls-py"><span class="toc-number">9.</span> <span class="toc-text">九、urls.py</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E8%BF%9B%E5%85%A5%E9%A1%B9%E7%9B%AE%E6%A0%B9%E7%9B%AE%E5%BD%95"><span class="toc-number">10.</span> <span class="toc-text">十、进入项目根目录</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E5%88%9B%E5%BB%BA%E4%B8%9A%E5%8A%A1-App"><span class="toc-number">11.</span> <span class="toc-text">十一、创建业务 App</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81Project-%E5%92%8C-App-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-number">12.</span> <span class="toc-text">十二、Project 和 App 的关系</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81App-%E4%B8%AD%E7%9A%84%E9%87%8D%E8%A6%81%E6%96%87%E4%BB%B6"><span class="toc-number">13.</span> <span class="toc-text">十三、App 中的重要文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#models-py"><span class="toc-number">13.1.</span> <span class="toc-text">models.py</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#views-py"><span class="toc-number">13.2.</span> <span class="toc-text">views.py</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#admin-py"><span class="toc-number">13.3.</span> <span class="toc-text">admin.py</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#migrations"><span class="toc-number">13.4.</span> <span class="toc-text">migrations&#x2F;</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E6%B3%A8%E5%86%8C-App"><span class="toc-number">14.</span> <span class="toc-text">十四、注册 App</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%B3%A8%E5%86%8C-Django-REST-Framework"><span class="toc-number">15.</span> <span class="toc-text">十五、注册 Django REST Framework</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E6%B3%A8%E5%86%8C-CORS"><span class="toc-number">16.</span> <span class="toc-text">十六、注册 CORS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%83%E3%80%81%E6%B7%BB%E5%8A%A0-CORS-%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">17.</span> <span class="toc-text">十七、添加 CORS 中间件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%85%AB%E3%80%81%E9%85%8D%E7%BD%AE%E5%85%81%E8%AE%B8%E7%9A%84%E5%89%8D%E7%AB%AF%E5%9C%B0%E5%9D%80"><span class="toc-number">18.</span> <span class="toc-text">十八、配置允许的前端地址</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B9%9D%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%81%E7%A7%BB"><span class="toc-number">19.</span> <span class="toc-text">十九、数据库迁移</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%81%E7%A7%BB%EF%BC%9F"><span class="toc-number">20.</span> <span class="toc-text">二十、什么是数据库迁移？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%B8%80%E3%80%81%E5%88%9B%E5%BB%BA%E8%B6%85%E7%BA%A7%E7%AE%A1%E7%90%86%E5%91%98"><span class="toc-number">21.</span> <span class="toc-text">二十一、创建超级管理员</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%BA%8C%E3%80%81Django-Admin"><span class="toc-number">22.</span> <span class="toc-text">二十二、Django Admin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%B8%89%E3%80%81%E5%90%AF%E5%8A%A8%E5%BC%80%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-number">23.</span> <span class="toc-text">二十三、启动开发服务器</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E5%9B%9B%E3%80%81runserver-%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">24.</span> <span class="toc-text">二十四、runserver 到底做了什么？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%BA%94%E3%80%81%E5%AE%8C%E6%95%B4%E5%88%9D%E5%A7%8B%E5%8C%96%E6%B5%81%E7%A8%8B"><span class="toc-number">25.</span> <span class="toc-text">二十五、完整初始化流程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E5%85%AD%E3%80%81%E5%9F%BA%E7%A1%80%E9%A1%B9%E7%9B%AE%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="toc-number">26.</span> <span class="toc-text">二十六、基础项目目录结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%B8%83%E3%80%81%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB%E5%90%8E%E7%9A%84%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84"><span class="toc-number">27.</span> <span class="toc-text">二十七、前后端分离后的整体结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E5%85%AB%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-number">28.</span> <span class="toc-text">二十八、总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/30/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/" title="Django 后端初始化与基础环境配置笔记">Django 后端初始化与基础环境配置笔记</a><time datetime="2026-09-30T04:45:00.000Z" title="发表于 2026-09-30 12:45:00">2026-09-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析">JWT 双 Token 机制与无感刷新原理解析</a><time datetime="2026-09-30T04:20:00.000Z" title="发表于 2026-09-30 12:20:00">2026-09-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记">从泰坦尼克号学习机器学习实践笔记</a><time datetime="2026-08-14T15:41:43.000Z" title="发表于 2026-08-14 23:41:43">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/%E9%85%8D%E7%BD%AE%E5%9F%BA%E4%BA%8E%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%9A%84%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95%E6%9C%BA%E5%88%B6%E7%AC%94%E8%AE%B0/" title="配置基于非对称加密的免密登录机制笔记">配置基于非对称加密的免密登录机制笔记</a><time datetime="2026-08-12T16:10:16.000Z" title="发表于 2026-08-13 00:10:16">2026-08-13</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/12/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02/" title="机器学习笔记2">机器学习笔记2</a><time datetime="2026-08-12T15:50:55.000Z" title="发表于 2026-08-12 23:50:55">2026-08-12</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By InkLovage</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.1</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.1"></script><script src="/js/main.js?v=5.6.1"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
