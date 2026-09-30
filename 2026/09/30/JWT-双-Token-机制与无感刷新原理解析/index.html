@@ -1,12 +1,20 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>JWT 双 Token 机制与无感刷新原理解析 | Ink Lovage</title><meta name="author" content="InkLovage"><meta name="copyright" content="InkLovage"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta property="og:type" content="article">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>JWT 双 Token 机制与无感刷新原理解析 | Ink Lovage</title><meta name="author" content="InkLovage"><meta name="copyright" content="InkLovage"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="详细理解 JWT Access Token 与 Refresh Token 的分工、无感刷新流程，以及 Django SimpleJWT 中 Token Rotation 和 Blacklist 的作用。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="JWT 双 Token 机制与无感刷新原理解析">
 <meta property="og:url" content="https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/index.html">
 <meta property="og:site_name" content="Ink Lovage">
+<meta property="og:description" content="详细理解 JWT Access Token 与 Refresh Token 的分工、无感刷新流程，以及 Django SimpleJWT 中 Token Rotation 和 Blacklist 的作用。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://inklovage.github.io/img/xiamu.jpg">
-<meta property="article:published_time" content="2026-09-30T04:27:46.000Z">
-<meta property="article:modified_time" content="2026-09-30T04:27:46.673Z">
+<meta property="article:published_time" content="2026-09-30T04:20:00.000Z">
+<meta property="article:modified_time" content="2026-09-30T04:33:17.262Z">
 <meta property="article:author" content="InkLovage">
+<meta property="article:tag" content="DRF">
+<meta property="article:tag" content="Django">
+<meta property="article:tag" content="JWT">
+<meta property="article:tag" content="SimpleJWT">
+<meta property="article:tag" content="Token">
+<meta property="article:tag" content="前后端分离">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://inklovage.github.io/img/xiamu.jpg"><script type="application/ld+json">{
   "@context": "https://schema.org",
@@ -14,8 +22,8 @@
   "headline": "JWT 双 Token 机制与无感刷新原理解析",
   "url": "https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/",
   "image": "https://inklovage.github.io/img/xiamu.jpg",
-  "datePublished": "2026-09-30T04:27:46.000Z",
-  "dateModified": "2026-09-30T04:27:46.673Z",
+  "datePublished": "2026-09-30T04:20:00.000Z",
+  "dateModified": "2026-09-30T04:33:17.262Z",
   "author": [
     {
       "@type": "Person",
@@ -196,7 +204,7 @@
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
   title: 'JWT 双 Token 机制与无感刷新原理解析',
   isHighlightShrink: false,
-  isToc: false,
+  isToc: true,
   pageType: 'post'
 }</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"><style>mjx-container[jax="SVG"] {
   direction: ltr;
@@ -310,4 +318,473 @@ mjx-container[display="true"] {
 mjx-container[display="true"] + br {
   display: none;
 }
-</style></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.png);"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/banner.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Ink Lovage</span></a><a class="nav-page-title" href="/"><span class="site-name">JWT 双 Token 机制与无感刷新原理解析</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">JWT 双 Token 机制与无感刷新原理解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-30T04:27:46.000Z" title="发表于 2026-09-30 12:27:46">2026-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-30T04:27:46.673Z" title="更新于 2026-09-30 12:27:46">2026-09-30</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://inklovage.github.io">InkLovage</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://inklovage.github.io" target="_blank">Ink Lovage</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/xiamu.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">从泰坦尼克号学习机器学习实践笔记</div></div><div class="info-2"><div class="info-item-1">泰坦尼克号生存预测是一个经典的二分类项目：我们根据乘客的舱位、性别、年龄、同行亲属人数、票价和登船港口等信息，预测乘客最终是否幸存。本文从任务定义开始，完整走通数据读取、缺失值处理、类别编码、模型训练、验证和提交文件生成，并复盘两次特征工程实验。   一、写项目前，我们要先弄清四件事面对一个新的机器学习项目，不要急着写模型，先回答下面四个问题。 1. 输入是什么？输入是每位乘客的特征，也就是特征矩阵 。本文选择：  Pclass：船票等级； Sex：性别； Age：年龄； SibSp：同船的兄弟姐妹或配偶数量； Parch：同船的父母或子女数量； Fare：票价； Embarked：登船港口。  其中 Pclass 虽然用数字表示，但数字对应的是舱位等级；Sex 和 Embarked 则是文本类别。机器学习模型不能把这些不同语义的数据全部当作普通连续数值，因此需要分类预处理。 2. 模型结构是什么？这是表格数据上的二分类任务。本文直接使用 scikit-learn 的逻辑回归 LogisticRegression，并用 Pipeline 把“数据预处理”和“模型”连接起来： 12...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/xiamu.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">InkLovage</div><div class="author-info-description">欢迎来到墨江离的个人博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">11</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/InkLovage"><i class="fab fa-github"></i><span>我的 GitHub</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Ink Lovage 的个人博客！</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析">JWT 双 Token 机制与无感刷新原理解析</a><time datetime="2026-09-30T04:27:46.000Z" title="发表于 2026-09-30 12:27:46">2026-09-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记">从泰坦尼克号学习机器学习实践笔记</a><time datetime="2026-08-14T15:41:43.000Z" title="发表于 2026-08-14 23:41:43">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/%E9%85%8D%E7%BD%AE%E5%9F%BA%E4%BA%8E%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%9A%84%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95%E6%9C%BA%E5%88%B6%E7%AC%94%E8%AE%B0/" title="配置基于非对称加密的免密登录机制笔记">配置基于非对称加密的免密登录机制笔记</a><time datetime="2026-08-12T16:10:16.000Z" title="发表于 2026-08-13 00:10:16">2026-08-13</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/12/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02/" title="机器学习笔记2">机器学习笔记2</a><time datetime="2026-08-12T15:50:55.000Z" title="发表于 2026-08-12 23:50:55">2026-08-12</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/08/softmax%E5%A4%9A%E5%88%86%E7%B1%BB%E5%AE%9E%E8%B7%B5/" title="softmax多分类实践">softmax多分类实践</a><time datetime="2026-08-08T15:27:21.000Z" title="发表于 2026-08-08 23:27:21">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By InkLovage</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.1</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.1"></script><script src="/js/main.js?v=5.6.1"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
+</style></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.png);"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/banner.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Ink Lovage</span></a><a class="nav-page-title" href="/"><span class="site-name">JWT 双 Token 机制与无感刷新原理解析</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">JWT 双 Token 机制与无感刷新原理解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-30T04:20:00.000Z" title="发表于 2026-09-30 12:20:00">2026-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-30T04:33:17.262Z" title="更新于 2026-09-30 12:33:17">2026-09-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/Django/">Django</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在前后端分离项目中，我们经常会使用 <strong>JWT（JSON Web Token）</strong> 完成用户身份认证。</p>
+<p>但是，如果只使用一个 Token，就会遇到一个非常典型的问题：</p>
+<blockquote>
+<p><strong>Token 的有效期到底应该设置多长？</strong></p>
+</blockquote>
+<p>设置得太长不安全，设置得太短用户又需要频繁重新登录。</p>
+<p>为了解决这个矛盾，实际项目中通常会采用：</p>
+<blockquote>
+<p><strong>Access Token + Refresh Token 双 Token 机制</strong></p>
+</blockquote>
+<p>本文记录一下双 Token 的基本原理，以及前端如何利用 Refresh Token 实现 JWT 的“无感刷新”。</p>
+<span id="more"></span>
+
+<h1 id="一、为什么需要双-Token？"><a href="#一、为什么需要双-Token？" class="headerlink" title="一、为什么需要双 Token？"></a>一、为什么需要双 Token？</h1><p>假设我们的系统中只有一个 JWT Token。</p>
+<p>如果将它的有效期设置为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">30 天</span><br></pre></td></tr></table></figure>
+
+<p>那么用户登录一次之后，未来 30 天都不需要重新登录。</p>
+<p>体验很好，但是安全性存在问题。</p>
+<p>如果这个 Token 在某一天被攻击者窃取，那么在 Token 失效之前，攻击者都可能利用它伪造用户身份访问系统。</p>
+<p>也就是说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Token 有效期越长</span><br><span class="line">        ↓</span><br><span class="line">用户体验越好</span><br><span class="line">        ↓</span><br><span class="line">Token 被盗后的风险窗口越长</span><br></pre></td></tr></table></figure>
+
+<p>反过来，如果我们把 Token 设置为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2 小时</span><br></pre></td></tr></table></figure>
+
+<p>那么安全性明显提高。</p>
+<p>即使 Token 被窃取，它能够被利用的时间也比较有限。</p>
+<p>但是新的问题又出现了：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Token 2 小时过期</span><br><span class="line">        ↓</span><br><span class="line">用户每隔一段时间就需要重新登录</span><br><span class="line">        ↓</span><br><span class="line">重新输入账号密码</span><br><span class="line">        ↓</span><br><span class="line">用户体验很差</span><br></pre></td></tr></table></figure>
+
+<p>于是产生了一个经典矛盾：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">                Token 生命周期</span><br><span class="line"></span><br><span class="line">短 ─────────────────────────────── 长</span><br><span class="line"></span><br><span class="line">安全性高                          用户体验好</span><br><span class="line">用户体验差                        安全风险增加</span><br></pre></td></tr></table></figure>
+
+<p>双 Token 机制的核心思想就是：</p>
+<blockquote>
+<p><strong>把“访问业务接口”和“维持登录状态”这两个职责拆开。</strong></p>
+</blockquote>
+<p>于是产生两个 Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">Refresh Token</span><br></pre></td></tr></table></figure>
+
+<p>它们分别负责不同的事情。</p>
+<hr>
+<h1 id="二、Access-Token-和-Refresh-Token"><a href="#二、Access-Token-和-Refresh-Token" class="headerlink" title="二、Access Token 和 Refresh Token"></a>二、Access Token 和 Refresh Token</h1><h2 id="2-1-Access-Token"><a href="#2-1-Access-Token" class="headerlink" title="2.1 Access Token"></a>2.1 Access Token</h2><p>Access Token 可以理解为：</p>
+<blockquote>
+<p><strong>真正用于访问系统业务接口的临时通行证。</strong></p>
+</blockquote>
+<p>例如：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET /api/users/</span><br><span class="line">GET /api/articles/</span><br><span class="line">POST /api/comments/</span><br></pre></td></tr></table></figure>
+
+<p>前端发送这些请求时，会把 Access Token 放进 HTTP Header：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer &lt;access_token&gt;</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/api/users/</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"></span><br><span class="line"><span class="language-avrasm"><span class="symbol">Authorization:</span> Bearer eyJhbGciOiJIUzI1NiIs...</span></span><br></pre></td></tr></table></figure>
+
+<p>后端收到请求后验证 JWT。</p>
+<p>如果 Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">签名正确</span><br><span class="line">+</span><br><span class="line">未过期</span><br><span class="line">+</span><br><span class="line">用户合法</span><br></pre></td></tr></table></figure>
+
+<p>那么允许访问接口。</p>
+<p>Access Token 通常设置为比较短的有效期，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">30 分钟</span><br><span class="line">1 小时</span><br><span class="line">2 小时</span><br></pre></td></tr></table></figure>
+
+<p>假设项目中配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ACCESS_TOKEN_LIFETIME = timedelta(hours=<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+
+<p>那么 Access Token 的有效期就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2 小时</span><br></pre></td></tr></table></figure>
+
+<h3 id="为什么-Access-Token-要设置得比较短？"><a href="#为什么-Access-Token-要设置得比较短？" class="headerlink" title="为什么 Access Token 要设置得比较短？"></a>为什么 Access Token 要设置得比较短？</h3><p>因为 Access Token 使用频率非常高。</p>
+<p>几乎每一次业务请求都会携带：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">前端</span><br><span class="line"> ↓</span><br><span class="line">Access Token</span><br><span class="line"> ↓</span><br><span class="line">网络</span><br><span class="line"> ↓</span><br><span class="line">后端</span><br></pre></td></tr></table></figure>
+
+<p>使用次数越多，暴露面也就越大。</p>
+<p>因此 Access Token 一旦泄露，我们希望它能够尽快失效。</p>
+<p>所以一般采用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">高频使用</span><br><span class="line">+</span><br><span class="line">短生命周期</span><br></pre></td></tr></table></figure>
+
+<p>来降低风险。</p>
+<hr>
+<h1 id="三、Refresh-Token"><a href="#三、Refresh-Token" class="headerlink" title="三、Refresh Token"></a>三、Refresh Token</h1><p>Refresh Token 可以理解为：</p>
+<blockquote>
+<p><strong>用于申请新 Access Token 的长期凭证。</strong></p>
+</blockquote>
+<p>它通常不能直接访问普通业务接口。</p>
+<p>例如 Refresh Token 不能直接拿去请求：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /api/users/</span><br></pre></td></tr></table></figure>
+
+<p>而是只能访问专门的 Token 刷新接口，例如：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST /api/token/refresh/</span><br></pre></td></tr></table></figure>
+
+<p>请求：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;refresh&quot;</span><span class="punctuation">:</span> <span class="string">&quot;xxxxxxxxxxxxxxxx&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果 Refresh Token 合法，后端就会签发一个新的 Access Token：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;access&quot;</span><span class="punctuation">:</span> <span class="string">&quot;new_access_token&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>因此两个 Token 的职责可以简单理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">    │</span><br><span class="line">    └── 访问业务接口</span><br><span class="line"></span><br><span class="line">Refresh Token</span><br><span class="line">    │</span><br><span class="line">    └── 获取新的 Access Token</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="四、为什么-Refresh-Token-可以设置得更长？"><a href="#四、为什么-Refresh-Token-可以设置得更长？" class="headerlink" title="四、为什么 Refresh Token 可以设置得更长？"></a>四、为什么 Refresh Token 可以设置得更长？</h1><p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access Token  = 2 小时</span><br><span class="line">Refresh Token = 7 天</span><br></pre></td></tr></table></figure>
+
+<p>Refresh Token 的使用频率远低于 Access Token。</p>
+<p>正常情况下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">访问业务接口</span><br><span class="line">    ↓</span><br><span class="line">只发送 Access Token</span><br></pre></td></tr></table></figure>
+
+<p>Refresh Token 不需要每次请求都发送。</p>
+<p>只有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access Token 过期</span><br></pre></td></tr></table></figure>
+
+<p>之后，才需要把 Refresh Token 发送到 Token 刷新接口。</p>
+<p>所以可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">高频使用</span><br><span class="line">短生命周期</span><br><span class="line"></span><br><span class="line">Refresh Token</span><br><span class="line">低频使用</span><br><span class="line">长生命周期</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">有效期：2 小时</span><br><span class="line">用途：请求业务接口</span><br><span class="line"></span><br><span class="line">Refresh Token</span><br><span class="line">有效期：7 天</span><br><span class="line">用途：换取新的 Access Token</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="五、双-Token-整体关系"><a href="#五、双-Token-整体关系" class="headerlink" title="五、双 Token 整体关系"></a>五、双 Token 整体关系</h1><p>可以把双 Token 理解成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">         用户登录</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">    ┌───────────────┐</span><br><span class="line">    │   Django API  │</span><br><span class="line">    └───────────────┘</span><br><span class="line">       │         │</span><br><span class="line">       ▼         ▼</span><br><span class="line">  Access       Refresh</span><br><span class="line">   Token        Token</span><br><span class="line">    │             │</span><br><span class="line">2 小时有效       7 天有效</span><br><span class="line">    │             │</span><br><span class="line">    ▼             ▼</span><br><span class="line">访问业务 API    刷新 Access</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Access Token → 权限使用</span><br><span class="line"></span><br><span class="line">Refresh Token → 权限续期</span><br></pre></td></tr></table></figure>
+
+<p>两者分工明确。</p>
+<hr>
+<h1 id="六、什么是“无感刷新”？"><a href="#六、什么是“无感刷新”？" class="headerlink" title="六、什么是“无感刷新”？"></a>六、什么是“无感刷新”？</h1><p>所谓 <strong>无感刷新 Token</strong>，并不是后端自己自动刷新 Token。</p>
+<p>而是：</p>
+<blockquote>
+<p><strong>前端发现 Access Token 过期以后，自动调用 Refresh 接口获取新的 Access Token，然后重新发送之前失败的请求。</strong></p>
+</blockquote>
+<p>整个过程用户看不到，因此称为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">无感刷新</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="七、首次登录流程"><a href="#七、首次登录流程" class="headerlink" title="七、首次登录流程"></a>七、首次登录流程</h1><p>用户首先输入：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">用户名</span><br><span class="line">密码</span><br></pre></td></tr></table></figure>
+
+<p>前端发送登录请求：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST /api/token/</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;username&quot;</span><span class="punctuation">:</span> <span class="string">&quot;admin&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;password&quot;</span><span class="punctuation">:</span> <span class="string">&quot;123456&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>后端验证成功以后返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;access&quot;</span><span class="punctuation">:</span> <span class="string">&quot;access_token_xxxxx&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;refresh&quot;</span><span class="punctuation">:</span> <span class="string">&quot;refresh_token_xxxxx&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>于是前端同时拥有：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">+</span><br><span class="line">Refresh Token</span><br></pre></td></tr></table></figure>
+
+<p>流程如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">用户输入账号密码</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">   POST /login/</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">    Django 后端</span><br><span class="line">        │</span><br><span class="line">   验证账号密码</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">┌───────────────────┐</span><br><span class="line">│ Access Token      │</span><br><span class="line">│ Refresh Token     │</span><br><span class="line">└───────────────────┘</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">       前端</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="八、正常业务请求"><a href="#八、正常业务请求" class="headerlink" title="八、正常业务请求"></a>八、正常业务请求</h1><p>登录完成以后，假设前端请求：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /api/user/profile/</span><br></pre></td></tr></table></figure>
+
+<p>前端会携带 Access Token：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer &lt;access_token&gt;</span><br></pre></td></tr></table></figure>
+
+<p>完整过程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">前端</span><br><span class="line"> │</span><br><span class="line"> │ Access Token</span><br><span class="line"> ▼</span><br><span class="line">业务 API</span><br><span class="line"> │</span><br><span class="line"> ▼</span><br><span class="line">验证 Token</span><br><span class="line"> │</span><br><span class="line"> ├── 有效</span><br><span class="line"> │</span><br><span class="line"> ▼</span><br><span class="line">返回数据</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET /api/user/profile/</span><br><span class="line"></span><br><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer eyJhbGciOiJIUzI1NiIs...</span><br></pre></td></tr></table></figure>
+
+<p>后端验证通过：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;username&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Tom&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;email&quot;</span><span class="punctuation">:</span> <span class="string">&quot;example@example.com&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>整个过程中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh Token 不参与</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="九、Access-Token-过期"><a href="#九、Access-Token-过期" class="headerlink" title="九、Access Token 过期"></a>九、Access Token 过期</h1><p>假设 Access Token 生命周期是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2 小时</span><br></pre></td></tr></table></figure>
+
+<p>用户登录两小时以后继续操作页面。</p>
+<p>前端仍然发送：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer &lt;旧 Access Token&gt;</span><br></pre></td></tr></table></figure>
+
+<p>但是后端发现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Token 已经过期</span><br></pre></td></tr></table></figure>
+
+<p>于是拒绝请求。</p>
+<p>在很多项目设计中，前端会根据认证失败响应判断是否应该进入刷新流程。</p>
+<p>常见情况包括：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">401 Unauthorized</span><br></pre></td></tr></table></figure>
+
+<p>此时用户并不需要立刻跳转登录页面。</p>
+<p>而是进入：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Token 刷新流程</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十、前端自动刷新-Token"><a href="#十、前端自动刷新-Token" class="headerlink" title="十、前端自动刷新 Token"></a>十、前端自动刷新 Token</h1><p>前端通常会使用 Axios 拦截器统一处理这种情况。</p>
+<p>逻辑大致是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">请求业务接口</span><br><span class="line">      │</span><br><span class="line">      ▼</span><br><span class="line">Access Token 有效？</span><br><span class="line">      │</span><br><span class="line"> ┌────┴────┐</span><br><span class="line"> │         │</span><br><span class="line">是         否</span><br><span class="line"> │         │</span><br><span class="line"> ▼         ▼</span><br><span class="line">正常返回   认证失败</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       调用刷新接口</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       Refresh Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">          后端</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">     新 Access Token</span><br></pre></td></tr></table></figure>
+
+<p>例如调用：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST /api/token/refresh/</span><br></pre></td></tr></table></figure>
+
+<p>发送：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;refresh&quot;</span><span class="punctuation">:</span> <span class="string">&quot;old_refresh_token&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>后端验证 Refresh Token。</p>
+<p>如果 Refresh Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">签名合法</span><br><span class="line">未过期</span><br><span class="line">未被拉黑</span><br></pre></td></tr></table></figure>
+
+<p>那么就返回新的 Access Token。</p>
+<p>例如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;access&quot;</span><span class="punctuation">:</span> <span class="string">&quot;new_access_token&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十一、重新发送刚才失败的请求"><a href="#十一、重新发送刚才失败的请求" class="headerlink" title="十一、重新发送刚才失败的请求"></a>十一、重新发送刚才失败的请求</h1><p>前端获取新的 Access Token 以后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">旧 Access Token</span><br><span class="line">      ↓</span><br><span class="line">     删除</span><br><span class="line"></span><br><span class="line">新 Access Token</span><br><span class="line">      ↓</span><br><span class="line">     保存</span><br></pre></td></tr></table></figure>
+
+<p>随后重新发送刚才因为 Token 过期而失败的请求。</p>
+<p>例如原请求：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /api/user/profile/</span><br></pre></td></tr></table></figure>
+
+<p>第一次：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">旧 Access Token</span><br><span class="line">      ↓</span><br><span class="line">401</span><br></pre></td></tr></table></figure>
+
+<p>刷新以后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">新 Access Token</span><br><span class="line">      ↓</span><br><span class="line">重新请求</span><br><span class="line">      ↓</span><br><span class="line">200 OK</span><br></pre></td></tr></table></figure>
+
+<p>完整流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">         请求 API</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">     Access Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       Token 过期</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       401 / 认证失败</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">    Axios 响应拦截器</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">   获取 Refresh Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">POST /api/token/refresh/</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       Django 后端</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">  验证 Refresh Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">   新 Access Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">       保存新 Token</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">      重发原始请求</span><br><span class="line">            │</span><br><span class="line">            ▼</span><br><span class="line">         请求成功</span><br></pre></td></tr></table></figure>
+
+<p>对用户来说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">点击按钮</span><br><span class="line">   ↓</span><br><span class="line">稍微等待</span><br><span class="line">   ↓</span><br><span class="line">页面正常加载</span><br></pre></td></tr></table></figure>
+
+<p>用户完全不需要知道：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access Token 刚刚已经过期了一次</span><br></pre></td></tr></table></figure>
+
+<p>这就是所谓的：</p>
+<blockquote>
+<p><strong>JWT 无感刷新。</strong></p>
+</blockquote>
+<hr>
+<h1 id="十二、Refresh-Token-也过期怎么办？"><a href="#十二、Refresh-Token-也过期怎么办？" class="headerlink" title="十二、Refresh Token 也过期怎么办？"></a>十二、Refresh Token 也过期怎么办？</h1><p>Refresh Token 不可能永久有效。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access Token  = 2 小时</span><br><span class="line">Refresh Token = 7 天</span><br></pre></td></tr></table></figure>
+
+<p>如果用户超过 7 天没有有效刷新，Refresh Token 也可能失效。</p>
+<p>此时流程就会变成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Access Token 过期</span><br><span class="line">       ↓</span><br><span class="line">尝试 Refresh</span><br><span class="line">       ↓</span><br><span class="line">Refresh Token 也过期</span><br><span class="line">       ↓</span><br><span class="line">刷新失败</span><br><span class="line">       ↓</span><br><span class="line">清除登录状态</span><br><span class="line">       ↓</span><br><span class="line">跳转登录页面</span><br><span class="line">       ↓</span><br><span class="line">重新输入账号密码</span><br></pre></td></tr></table></figure>
+
+<p>所以：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access Token 过期</span><br></pre></td></tr></table></figure>
+
+<p>通常不意味着用户必须重新登录。</p>
+<p>真正导致需要重新登录的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh Token 也已经无法继续使用</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="十三、SimpleJWT-中的-Token-Rotation"><a href="#十三、SimpleJWT-中的-Token-Rotation" class="headerlink" title="十三、SimpleJWT 中的 Token Rotation"></a>十三、SimpleJWT 中的 Token Rotation</h1><p>如果 Django REST Framework 使用的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">djangorestframework-simplejwt</span><br></pre></td></tr></table></figure>
+
+<p>可能会看到如下配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SIMPLE_JWT = &#123;</span><br><span class="line">    <span class="string">&#x27;ROTATE_REFRESH_TOKENS&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">    <span class="string">&#x27;BLACKLIST_AFTER_ROTATION&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这两个配置与 Refresh Token 的安全机制有关。</p>
+<hr>
+<h1 id="十四、ROTATE-REFRESH-TOKENS"><a href="#十四、ROTATE-REFRESH-TOKENS" class="headerlink" title="十四、ROTATE_REFRESH_TOKENS"></a>十四、ROTATE_REFRESH_TOKENS</h1><p>配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;ROTATE_REFRESH_TOKENS&#x27;</span>: <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<p>表示：</p>
+<blockquote>
+<p>使用 Refresh Token 刷新时，不仅生成新的 Access Token，同时还会返回新的 Refresh Token。</p>
+</blockquote>
+<p>如果关闭 Rotation：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">   │</span><br><span class="line">   ├── Access B</span><br><span class="line">   │</span><br><span class="line">   ├── Access C</span><br><span class="line">   │</span><br><span class="line">   └── Access D</span><br></pre></td></tr></table></figure>
+
+<p>同一个 Refresh Token 可以在生命周期内重复参与刷新。</p>
+<p>开启 Rotation 以后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Access B</span><br><span class="line">+</span><br><span class="line">Refresh B</span><br></pre></td></tr></table></figure>
+
+<p>下一次应该继续使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh B</span><br></pre></td></tr></table></figure>
+
+<p>然后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Refresh B</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Access C</span><br><span class="line">+</span><br><span class="line">Refresh C</span><br></pre></td></tr></table></figure>
+
+<p>形成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">   ↓</span><br><span class="line">Refresh B</span><br><span class="line">   ↓</span><br><span class="line">Refresh C</span><br><span class="line">   ↓</span><br><span class="line">Refresh D</span><br></pre></td></tr></table></figure>
+
+<p>因此前端收到刷新接口响应后，除了替换 Access Token，还需要同步更新 Refresh Token。</p>
+<p>伪代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> response = <span class="keyword">await</span> <span class="title function_">refreshToken</span>()</span><br><span class="line"></span><br><span class="line">accessToken = response.<span class="property">access</span></span><br><span class="line">refreshToken = response.<span class="property">refresh</span></span><br></pre></td></tr></table></figure>
+
+<p>而不能只更新 Access Token。</p>
+<hr>
+<h1 id="十五、BLACKLIST-AFTER-ROTATION"><a href="#十五、BLACKLIST-AFTER-ROTATION" class="headerlink" title="十五、BLACKLIST_AFTER_ROTATION"></a>十五、BLACKLIST_AFTER_ROTATION</h1><p>第二个配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;BLACKLIST_AFTER_ROTATION&#x27;</span>: <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<p>表示：</p>
+<blockquote>
+<p>Refresh Token 完成轮换以后，将旧 Refresh Token 加入黑名单。</p>
+</blockquote>
+<p>例如当前：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br></pre></td></tr></table></figure>
+
+<p>请求刷新以后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">   │</span><br><span class="line">   ▼</span><br><span class="line">Access B</span><br><span class="line">Refresh B</span><br></pre></td></tr></table></figure>
+
+<p>服务器同时将：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br></pre></td></tr></table></figure>
+
+<p>加入黑名单。</p>
+<p>于是 Refresh A：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不能再次使用</span><br></pre></td></tr></table></figure>
+
+<p>后续只能使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh B</span><br></pre></td></tr></table></figure>
+
+<p>也就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">    │</span><br><span class="line">    ├── 生成 Refresh B</span><br><span class="line">    │</span><br><span class="line">    └── 进入 Blacklist</span><br><span class="line">              ↓</span><br><span class="line">             失效</span><br></pre></td></tr></table></figure>
+
+<p>这样做的重要意义是：</p>
+<blockquote>
+<p><strong>减少旧 Refresh Token 被重复利用的风险。</strong></p>
+</blockquote>
+<hr>
+<h1 id="十六、Rotation-Blacklist-联合工作"><a href="#十六、Rotation-Blacklist-联合工作" class="headerlink" title="十六、Rotation + Blacklist 联合工作"></a>十六、Rotation + Blacklist 联合工作</h1><p>两个配置：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;ROTATE_REFRESH_TOKENS&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line"><span class="string">&#x27;BLACKLIST_AFTER_ROTATION&#x27;</span>: <span class="literal">True</span>,</span><br></pre></td></tr></table></figure>
+
+<p>组合起来以后，Refresh Token 的生命周期大致如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">请求刷新</span><br><span class="line">    │</span><br><span class="line">    ├───────────────┐</span><br><span class="line">    ▼               ▼</span><br><span class="line">Access B        Refresh B</span><br><span class="line">                    │</span><br><span class="line">Refresh A ----------┘</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Blacklist</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">永久不能再次用于正常刷新</span><br></pre></td></tr></table></figure>
+
+<p>下一次：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Refresh B</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Access C</span><br><span class="line">+</span><br><span class="line">Refresh C</span><br></pre></td></tr></table></figure>
+
+<p>同时：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Refresh B → Blacklist</span><br></pre></td></tr></table></figure>
+
+<p>继续下去：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">R1 → R2 → R3 → R4 → R5</span><br><span class="line">×    ×    ×    ×</span><br></pre></td></tr></table></figure>
+
+<p>旧 Token 会不断失效。</p>
+<hr>
+<h1 id="十七、一个需要特别注意的安全问题"><a href="#十七、一个需要特别注意的安全问题" class="headerlink" title="十七、一个需要特别注意的安全问题"></a>十七、一个需要特别注意的安全问题</h1><p>有一种常见说法：</p>
+<blockquote>
+<p>“Refresh Token 很少传输，所以可以放心存 LocalStorage。”</p>
+</blockquote>
+<p>这个说法并不严谨。</p>
+<p>Refresh Token 确实比 Access Token 发送频率低，但这并不意味着：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LocalStorage = 安全</span><br></pre></td></tr></table></figure>
+
+<p>如果页面存在 XSS 漏洞，攻击代码可能读取：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&quot;refresh_token&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>那么 Refresh Token 仍然可能被窃取。</p>
+<p>因此实际生产环境中，经常需要根据架构考虑：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">HttpOnly Cookie</span><br><span class="line">Secure</span><br><span class="line">SameSite</span><br><span class="line">CSRF 防护</span><br><span class="line">Token Rotation</span><br><span class="line">Refresh Token Blacklist</span><br></pre></td></tr></table></figure>
+
+<p>例如将 Refresh Token 放入：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HttpOnly Cookie</span><br></pre></td></tr></table></figure>
+
+<p>可以避免普通 JavaScript 直接读取它。</p>
+<p>具体存储方案仍然需要根据：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">前后端部署方式</span><br><span class="line">跨域情况</span><br><span class="line">CSRF 策略</span><br><span class="line">XSS 防护</span><br><span class="line">移动端 / Web 端</span><br></pre></td></tr></table></figure>
+
+<p>综合设计。</p>
+<hr>
+<h1 id="十八、旧-Refresh-Token-被使用意味着什么？"><a href="#十八、旧-Refresh-Token-被使用意味着什么？" class="headerlink" title="十八、旧 Refresh Token 被使用意味着什么？"></a>十八、旧 Refresh Token 被使用意味着什么？</h1><p>开启：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BLACKLIST_AFTER_ROTATION = <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<p>之后，旧 Refresh Token 被轮换以后会进入黑名单。</p>
+<p>如果之后再次拿旧 Token 请求刷新：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Refresh A</span><br><span class="line">   ↓</span><br><span class="line">服务器查询 Blacklist</span><br><span class="line">   ↓</span><br><span class="line">发现已失效</span><br><span class="line">   ↓</span><br><span class="line">拒绝刷新</span><br></pre></td></tr></table></figure>
+
+<p>但是要特别注意：</p>
+<blockquote>
+<p><strong>SimpleJWT 的 Blacklist 机制本身主要负责让 Token 失效，并不等同于完整的 Refresh Token 重用检测系统。</strong></p>
+</blockquote>
+<p>例如想实现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">发现已经使用过的 Refresh Token 再次出现</span><br><span class="line">        ↓</span><br><span class="line">认为 Refresh Token 可能泄露</span><br><span class="line">        ↓</span><br><span class="line">撤销当前用户所有会话</span><br><span class="line">        ↓</span><br><span class="line">记录安全日志</span><br><span class="line">        ↓</span><br><span class="line">要求重新登录</span><br></pre></td></tr></table></figure>
+
+<p>一般还需要额外编写后端安全逻辑。</p>
+<p>因此不能简单认为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BLACKLIST_AFTER_ROTATION = True</span><br></pre></td></tr></table></figure>
+
+<p>就自动等于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">发现攻击者</span><br><span class="line">+</span><br><span class="line">注销用户全部 Token</span><br><span class="line">+</span><br><span class="line">触发安全警报</span><br></pre></td></tr></table></figure>
+
+<p>这是两个不同层级的功能。</p>
+<hr>
+<h1 id="十九、完整生命周期示例"><a href="#十九、完整生命周期示例" class="headerlink" title="十九、完整生命周期示例"></a>十九、完整生命周期示例</h1><p>假设：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access Token  = 2 小时</span><br><span class="line">Refresh Token = 7 天</span><br></pre></td></tr></table></figure>
+
+<p>并开启：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;ROTATE_REFRESH_TOKENS&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line"><span class="string">&#x27;BLACKLIST_AFTER_ROTATION&#x27;</span>: <span class="literal">True</span>,</span><br></pre></td></tr></table></figure>
+
+<p>第一次登录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Login</span><br><span class="line"> │</span><br><span class="line"> ├── Access A</span><br><span class="line"> │</span><br><span class="line"> └── Refresh A</span><br></pre></td></tr></table></figure>
+
+<p>2 小时后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Access A 过期</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Refresh A</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">刷新</span><br><span class="line">    │</span><br><span class="line">    ├── Access B</span><br><span class="line">    └── Refresh B</span><br><span class="line"></span><br><span class="line">Refresh A → Blacklist</span><br></pre></td></tr></table></figure>
+
+<p>再过一段时间：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Access B 过期</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Refresh B</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">刷新</span><br><span class="line">    │</span><br><span class="line">    ├── Access C</span><br><span class="line">    └── Refresh C</span><br><span class="line"></span><br><span class="line">Refresh B → Blacklist</span><br></pre></td></tr></table></figure>
+
+<p>继续：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Access C</span><br><span class="line">+</span><br><span class="line">Refresh C</span><br></pre></td></tr></table></figure>
+
+<p>所以用户看到的是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">登录一次</span><br><span class="line">   ↓</span><br><span class="line">正常使用网站</span><br><span class="line">   ↓</span><br><span class="line">正常使用</span><br><span class="line">   ↓</span><br><span class="line">正常使用</span><br></pre></td></tr></table></figure>
+
+<p>实际上后台已经发生：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Access A → Access B → Access C → Access D</span><br><span class="line"></span><br><span class="line">Refresh A → Refresh B → Refresh C → Refresh D</span><br><span class="line">     ×           ×           ×</span><br></pre></td></tr></table></figure>
+
+<p>整个 Token 更新过程对用户不可见。</p>
+<hr>
+<h1 id="二十、前端-Axios-中的大致实现思想"><a href="#二十、前端-Axios-中的大致实现思想" class="headerlink" title="二十、前端 Axios 中的大致实现思想"></a>二十、前端 Axios 中的大致实现思想</h1><p>真正实现“无感刷新”时，通常会使用 Axios 的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">axios.<span class="property">interceptors</span>.<span class="property">response</span>.<span class="title function_">use</span>()</span><br></pre></td></tr></table></figure>
+
+<p>统一拦截认证失败。</p>
+<p>基本思路：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">axios.<span class="property">interceptors</span>.<span class="property">response</span>.<span class="title function_">use</span>(</span><br><span class="line">  <span class="function"><span class="params">response</span> =&gt;</span> response,</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> error =&gt; &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (error.<span class="property">response</span>?.<span class="property">status</span> === <span class="number">401</span>) &#123;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 获取 Refresh Token</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// 请求 /token/refresh/</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// 保存新的 Access Token</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// 如果开启 Refresh Rotation</span></span><br><span class="line">      <span class="comment">// 同时保存新的 Refresh Token</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// 修改原请求 Authorization</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">// 重发原请求</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">Promise</span>.<span class="title function_">reject</span>(error)</span><br><span class="line">  &#125;</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>但是实际项目不能简单写成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">看到所有 401</span><br><span class="line">    ↓</span><br><span class="line">立即刷新</span><br></pre></td></tr></table></figure>
+
+<p>因为还需要处理：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Refresh 接口本身返回 401</span><br><span class="line">并发请求同时触发刷新</span><br><span class="line">重复刷新</span><br><span class="line">无限循环</span><br><span class="line">多个请求排队等待刷新</span><br><span class="line">Refresh Token 已过期</span><br><span class="line">登录接口返回 401</span><br></pre></td></tr></table></figure>
+
+<p>所以真正完整的 Axios 无感刷新通常还需要：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_retry 标记</span><br><span class="line">+</span><br><span class="line">isRefreshing 锁</span><br><span class="line">+</span><br><span class="line">请求等待队列</span><br></pre></td></tr></table></figure>
+
+<p>这一部分可以单独作为下一篇笔记。</p>
+<hr>
+<h1 id="二十一、双-Token-的核心逻辑"><a href="#二十一、双-Token-的核心逻辑" class="headerlink" title="二十一、双 Token 的核心逻辑"></a>二十一、双 Token 的核心逻辑</h1><p>最后可以把整个机制浓缩成一句话：</p>
+<blockquote>
+<p><strong>Access Token 用短生命周期保证安全，Refresh Token 用长生命周期保证用户体验。</strong></p>
+</blockquote>
+<p>Access Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">短效</span><br><span class="line">高频</span><br><span class="line">访问业务接口</span><br></pre></td></tr></table></figure>
+
+<p>Refresh Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">长效</span><br><span class="line">低频</span><br><span class="line">刷新访问权限</span><br></pre></td></tr></table></figure>
+
+<p>完整逻辑：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">       用户登录</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">Access + Refresh</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line"> 使用 Access Token</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">  Access 是否过期？</span><br><span class="line">     /          \</span><br><span class="line">   否            是</span><br><span class="line">   │             │</span><br><span class="line">   ▼             ▼</span><br><span class="line">正常请求     使用 Refresh</span><br><span class="line">                 │</span><br><span class="line">                 ▼</span><br><span class="line">         Refresh 是否有效？</span><br><span class="line">            /          \</span><br><span class="line">          是            否</span><br><span class="line">          │             │</span><br><span class="line">          ▼             ▼</span><br><span class="line">     新 Access      重新登录</span><br><span class="line">          │</span><br><span class="line">          ▼</span><br><span class="line">      重发原请求</span><br></pre></td></tr></table></figure>
+
+<p>因此所谓 JWT <strong>无感刷新</strong>，本质上就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">短生命周期 Access Token</span><br><span class="line">          +</span><br><span class="line">长生命周期 Refresh Token</span><br><span class="line">          +</span><br><span class="line">前端请求拦截器</span><br><span class="line">          +</span><br><span class="line">Token 刷新接口</span><br><span class="line">          +</span><br><span class="line">失败请求自动重试</span><br></pre></td></tr></table></figure>
+
+<p>共同实现的一套用户认证机制。</p>
+<hr>
+<h1 id="二十二、总结"><a href="#二十二、总结" class="headerlink" title="二十二、总结"></a>二十二、总结</h1><p>JWT 双 Token 解决的是一个非常核心的问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">安全性</span><br><span class="line">  VS</span><br><span class="line">用户体验</span><br></pre></td></tr></table></figure>
+
+<p>如果只有 Access Token：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">设置太长 → 不安全</span><br><span class="line">设置太短 → 经常重新登录</span><br></pre></td></tr></table></figure>
+
+<p>加入 Refresh Token 后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Access Token</span><br><span class="line">负责短期身份认证</span><br><span class="line"></span><br><span class="line">Refresh Token</span><br><span class="line">负责长期维持登录状态</span><br></pre></td></tr></table></figure>
+
+<p>再结合：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;ROTATE_REFRESH_TOKENS&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line"><span class="string">&#x27;BLACKLIST_AFTER_ROTATION&#x27;</span>: <span class="literal">True</span>,</span><br></pre></td></tr></table></figure>
+
+<p>可以进一步实现 Refresh Token 的轮换和旧 Token 失效机制。</p>
+<p>最终形成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">登录</span><br><span class="line"> ↓</span><br><span class="line">Access Token</span><br><span class="line"> ↓</span><br><span class="line">请求业务接口</span><br><span class="line"> ↓</span><br><span class="line">Access 过期</span><br><span class="line"> ↓</span><br><span class="line">Refresh Token 自动刷新</span><br><span class="line"> ↓</span><br><span class="line">新 Access Token</span><br><span class="line"> ↓</span><br><span class="line">自动重发请求</span><br><span class="line"> ↓</span><br><span class="line">用户无感知</span><br></pre></td></tr></table></figure>
+
+<p>这也是目前前后端分离项目中非常常见的一种 JWT 身份认证设计。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://inklovage.github.io">InkLovage</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">https://inklovage.github.io/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://inklovage.github.io" target="_blank">Ink Lovage</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/JWT/">JWT</a><a class="post-meta__tags" href="/tags/Django/">Django</a><a class="post-meta__tags" href="/tags/DRF/">DRF</a><a class="post-meta__tags" href="/tags/SimpleJWT/">SimpleJWT</a><a class="post-meta__tags" href="/tags/Token/">Token</a><a class="post-meta__tags" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB/">前后端分离</a></div><div class="post-share"><div class="social-share" data-image="/img/xiamu.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">从泰坦尼克号学习机器学习实践笔记</div></div><div class="info-2"><div class="info-item-1">泰坦尼克号生存预测是一个经典的二分类项目：我们根据乘客的舱位、性别、年龄、同行亲属人数、票价和登船港口等信息，预测乘客最终是否幸存。本文从任务定义开始，完整走通数据读取、缺失值处理、类别编码、模型训练、验证和提交文件生成，并复盘两次特征工程实验。   一、写项目前，我们要先弄清四件事面对一个新的机器学习项目，不要急着写模型，先回答下面四个问题。 1. 输入是什么？输入是每位乘客的特征，也就是特征矩阵 。本文选择：  Pclass：船票等级； Sex：性别； Age：年龄； SibSp：同船的兄弟姐妹或配偶数量； Parch：同船的父母或子女数量； Fare：票价； Embarked：登船港口。  其中 Pclass 虽然用数字表示，但数字对应的是舱位等级；Sex 和 Embarked 则是文本类别。机器学习模型不能把这些不同语义的数据全部当作普通连续数值，因此需要分类预处理。 2. 模型结构是什么？这是表格数据上的二分类任务。本文直接使用 scikit-learn 的逻辑回归 LogisticRegression，并用 Pipeline 把“数据预处理”和“模型”连接起来： 12...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/xiamu.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">InkLovage</div><div class="author-info-description">欢迎来到墨江离的个人博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/InkLovage"><i class="fab fa-github"></i><span>我的 GitHub</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Ink Lovage 的个人博客！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%8F%8C-Token%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">一、为什么需要双 Token？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Access-Token-%E5%92%8C-Refresh-Token"><span class="toc-number">2.</span> <span class="toc-text">二、Access Token 和 Refresh Token</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-Access-Token"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 Access Token</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-Access-Token-%E8%A6%81%E8%AE%BE%E7%BD%AE%E5%BE%97%E6%AF%94%E8%BE%83%E7%9F%AD%EF%BC%9F"><span class="toc-number">2.1.1.</span> <span class="toc-text">为什么 Access Token 要设置得比较短？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81Refresh-Token"><span class="toc-number">3.</span> <span class="toc-text">三、Refresh Token</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88-Refresh-Token-%E5%8F%AF%E4%BB%A5%E8%AE%BE%E7%BD%AE%E5%BE%97%E6%9B%B4%E9%95%BF%EF%BC%9F"><span class="toc-number">4.</span> <span class="toc-text">四、为什么 Refresh Token 可以设置得更长？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%8F%8C-Token-%E6%95%B4%E4%BD%93%E5%85%B3%E7%B3%BB"><span class="toc-number">5.</span> <span class="toc-text">五、双 Token 整体关系</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E2%80%9C%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E2%80%9D%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">六、什么是“无感刷新”？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E9%A6%96%E6%AC%A1%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B"><span class="toc-number">7.</span> <span class="toc-text">七、首次登录流程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%AD%A3%E5%B8%B8%E4%B8%9A%E5%8A%A1%E8%AF%B7%E6%B1%82"><span class="toc-number">8.</span> <span class="toc-text">八、正常业务请求</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B9%9D%E3%80%81Access-Token-%E8%BF%87%E6%9C%9F"><span class="toc-number">9.</span> <span class="toc-text">九、Access Token 过期</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E5%89%8D%E7%AB%AF%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0-Token"><span class="toc-number">10.</span> <span class="toc-text">十、前端自动刷新 Token</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E9%87%8D%E6%96%B0%E5%8F%91%E9%80%81%E5%88%9A%E6%89%8D%E5%A4%B1%E8%B4%A5%E7%9A%84%E8%AF%B7%E6%B1%82"><span class="toc-number">11.</span> <span class="toc-text">十一、重新发送刚才失败的请求</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81Refresh-Token-%E4%B9%9F%E8%BF%87%E6%9C%9F%E6%80%8E%E4%B9%88%E5%8A%9E%EF%BC%9F"><span class="toc-number">12.</span> <span class="toc-text">十二、Refresh Token 也过期怎么办？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81SimpleJWT-%E4%B8%AD%E7%9A%84-Token-Rotation"><span class="toc-number">13.</span> <span class="toc-text">十三、SimpleJWT 中的 Token Rotation</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81ROTATE-REFRESH-TOKENS"><span class="toc-number">14.</span> <span class="toc-text">十四、ROTATE_REFRESH_TOKENS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%BA%94%E3%80%81BLACKLIST-AFTER-ROTATION"><span class="toc-number">15.</span> <span class="toc-text">十五、BLACKLIST_AFTER_ROTATION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%85%AD%E3%80%81Rotation-Blacklist-%E8%81%94%E5%90%88%E5%B7%A5%E4%BD%9C"><span class="toc-number">16.</span> <span class="toc-text">十六、Rotation + Blacklist 联合工作</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%83%E3%80%81%E4%B8%80%E4%B8%AA%E9%9C%80%E8%A6%81%E7%89%B9%E5%88%AB%E6%B3%A8%E6%84%8F%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98"><span class="toc-number">17.</span> <span class="toc-text">十七、一个需要特别注意的安全问题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E5%85%AB%E3%80%81%E6%97%A7-Refresh-Token-%E8%A2%AB%E4%BD%BF%E7%94%A8%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">18.</span> <span class="toc-text">十八、旧 Refresh Token 被使用意味着什么？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B9%9D%E3%80%81%E5%AE%8C%E6%95%B4%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%A4%BA%E4%BE%8B"><span class="toc-number">19.</span> <span class="toc-text">十九、完整生命周期示例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E3%80%81%E5%89%8D%E7%AB%AF-Axios-%E4%B8%AD%E7%9A%84%E5%A4%A7%E8%87%B4%E5%AE%9E%E7%8E%B0%E6%80%9D%E6%83%B3"><span class="toc-number">20.</span> <span class="toc-text">二十、前端 Axios 中的大致实现思想</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%B8%80%E3%80%81%E5%8F%8C-Token-%E7%9A%84%E6%A0%B8%E5%BF%83%E9%80%BB%E8%BE%91"><span class="toc-number">21.</span> <span class="toc-text">二十一、双 Token 的核心逻辑</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8D%81%E4%BA%8C%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-number">22.</span> <span class="toc-text">二十二、总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/30/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析">JWT 双 Token 机制与无感刷新原理解析</a><time datetime="2026-09-30T04:20:00.000Z" title="发表于 2026-09-30 12:20:00">2026-09-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记">从泰坦尼克号学习机器学习实践笔记</a><time datetime="2026-08-14T15:41:43.000Z" title="发表于 2026-08-14 23:41:43">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/%E9%85%8D%E7%BD%AE%E5%9F%BA%E4%BA%8E%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%9A%84%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95%E6%9C%BA%E5%88%B6%E7%AC%94%E8%AE%B0/" title="配置基于非对称加密的免密登录机制笔记">配置基于非对称加密的免密登录机制笔记</a><time datetime="2026-08-12T16:10:16.000Z" title="发表于 2026-08-13 00:10:16">2026-08-13</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/12/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02/" title="机器学习笔记2">机器学习笔记2</a><time datetime="2026-08-12T15:50:55.000Z" title="发表于 2026-08-12 23:50:55">2026-08-12</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/08/softmax%E5%A4%9A%E5%88%86%E7%B1%BB%E5%AE%9E%E8%B7%B5/" title="softmax多分类实践">softmax多分类实践</a><time datetime="2026-08-08T15:27:21.000Z" title="发表于 2026-08-08 23:27:21">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By InkLovage</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.1</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.1"></script><script src="/js/main.js?v=5.6.1"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
