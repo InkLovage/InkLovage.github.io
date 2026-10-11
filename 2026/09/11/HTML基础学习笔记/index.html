@@ -1,0 +1,756 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战 | Ink Lovage</title><meta name="author" content="InkLovage"><meta name="copyright" content="InkLovage"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="系统整理 HTML 标签、元素与属性、文档结构、语义化标签、DOM 树、表单及 Vue 单文件组件，附带个人博客综合实战。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战">
+<meta property="og:url" content="https://inklovage.github.io/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Ink Lovage">
+<meta property="og:description" content="系统整理 HTML 标签、元素与属性、文档结构、语义化标签、DOM 树、表单及 Vue 单文件组件，附带个人博客综合实战。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://inklovage.github.io/img/xiamu.jpg">
+<meta property="article:published_time" content="2026-09-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-11T11:55:19.823Z">
+<meta property="article:author" content="InkLovage">
+<meta property="article:tag" content="HTML">
+<meta property="article:tag" content="Vue3">
+<meta property="article:tag" content="前端基础">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://inklovage.github.io/img/xiamu.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战",
+  "url": "https://inklovage.github.io/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/",
+  "image": "https://inklovage.github.io/img/xiamu.jpg",
+  "datePublished": "2026-09-10T16:00:00.000Z",
+  "dateModified": "2026-10-11T11:55:19.823Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "InkLovage",
+      "url": "https://inklovage.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://inklovage.github.io/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"><style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.png);"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/banner.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Ink Lovage</span></a><a class="nav-page-title" href="/"><span class="site-name">HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-10T16:00:00.000Z" title="发表于 2026-09-11 00:00:00">2026-09-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-11T11:55:19.823Z" title="更新于 2026-10-11 19:55:19">2026-10-11</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/">前端开发</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
+<p>本文是 HTML 入门阶段的学习笔记，目标是<strong>能够读懂网页结构，并为后续学习 CSS、JavaScript、Vue 3 打基础</strong>。示例既包含标准 HTML，也包含可以直接放到 Vue 官方演练场 <code>App.vue</code> 中的 Vue 模板。</p>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="一、HTML-是什么？"><a href="#一、HTML-是什么？" class="headerlink" title="一、HTML 是什么？"></a>一、HTML 是什么？</h2><p><strong>HTML（HyperText Markup Language，超文本标记语言）<strong>是一种用于描述网页</strong>内容和结构</strong>的标记语言，而非用于一般计算的编程语言。</p>
+<p>前端三大基础技术分工：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>主要职责</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTML</td>
+<td>网页有什么（内容、结构、语义）</td>
+<td>标题、段落、按钮、表单</td>
+</tr>
+<tr>
+<td>CSS</td>
+<td>网页长什么样（外观、布局）</td>
+<td>颜色、间距、Flex、Grid</td>
+</tr>
+<tr>
+<td>JavaScript</td>
+<td>网页如何交互（行为、逻辑）</td>
+<td>点击事件、动态更新、请求 API</td>
+</tr>
+</tbody></table>
+<p>Vue 3 建立在这些基础上，提供组件、响应式数据和模板等能力。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">h1</span>&gt;</span>欢迎学习前端！<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>这是我的第一段 HTML。<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、标签、元素、属性"><a href="#二、标签、元素、属性" class="headerlink" title="二、标签、元素、属性"></a>二、标签、元素、属性</h2><h3 id="1-标签与元素"><a href="#1-标签与元素" class="headerlink" title="1. 标签与元素"></a>1. 标签与元素</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>Hello World!<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>&lt;p&gt;</code>：开始标签；<code>&lt;/p&gt;</code>：结束标签。</li>
+<li><code>Hello World!</code>：元素的文本内容。</li>
+<li><code>&lt;p&gt;Hello World!&lt;/p&gt;</code>：完整的 <strong>HTML 元素（element）</strong>。</li>
+</ul>
+<p>元素可以嵌套：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">ul</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">li</span>&gt;</span>HTML<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">li</span>&gt;</span>CSS<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>ul</code> 是无序列表，<code>li</code> 是列表项。</p>
+<h3 id="2-常见标签速查"><a href="#2-常见标签速查" class="headerlink" title="2. 常见标签速查"></a>2. 常见标签速查</h3><table>
+<thead>
+<tr>
+<th>标签</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>h1</code> ~ <code>h6</code></td>
+<td>不同层级的标题（按文档结构使用）</td>
+</tr>
+<tr>
+<td><code>p</code></td>
+<td>段落</td>
+</tr>
+<tr>
+<td><code>a</code></td>
+<td>超链接</td>
+</tr>
+<tr>
+<td><code>ul</code> &#x2F; <code>ol</code> &#x2F; <code>li</code></td>
+<td>无序列表 &#x2F; 有序列表 &#x2F; 列表项</td>
+</tr>
+<tr>
+<td><code>div</code></td>
+<td>无特定语义的块级通用容器</td>
+</tr>
+<tr>
+<td><code>span</code></td>
+<td>无特定语义的行内容器</td>
+</tr>
+<tr>
+<td><code>strong</code></td>
+<td>重要性强调</td>
+</tr>
+<tr>
+<td><code>img</code></td>
+<td>图片</td>
+</tr>
+<tr>
+<td><code>button</code></td>
+<td>按钮</td>
+</tr>
+<tr>
+<td><code>input</code></td>
+<td>输入控件</td>
+</tr>
+</tbody></table>
+<p><code>div</code> 与 <code>span</code> 主要用来组织内容，本身不表示“文章”“导航”等具体语义。</p>
+<h3 id="3-HTML-属性"><a href="#3-HTML-属性" class="headerlink" title="3. HTML 属性"></a>3. HTML 属性</h3><p>属性写在开始标签中，用于提供附加信息：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;email&quot;</span> <span class="attr">id</span>=<span class="string">&quot;user_email&quot;</span> <span class="attr">name</span>=<span class="string">&quot;email&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">placeholder</span>=<span class="string">&quot;请输入邮箱&quot;</span> <span class="attr">required</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;#about&quot;</span>&gt;</span>关于我<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">&quot;avatar.png&quot;</span> <span class="attr">alt</span>=<span class="string">&quot;个人头像&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>主要用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>标识当前文档中的特定元素（应当唯一）</td>
+</tr>
+<tr>
+<td><code>class</code></td>
+<td>为一组元素设置类名，便于 CSS&#x2F;JS 使用</td>
+</tr>
+<tr>
+<td><code>href</code></td>
+<td>链接目标</td>
+</tr>
+<tr>
+<td><code>src</code></td>
+<td>图片、脚本等资源地址</td>
+</tr>
+<tr>
+<td><code>alt</code></td>
+<td>图片的替代文字</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>输入框或按钮类型</td>
+</tr>
+<tr>
+<td><code>placeholder</code></td>
+<td>输入框为空时的提示文本</td>
+</tr>
+<tr>
+<td><code>required</code></td>
+<td>表单必填约束（布尔属性）</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>表单提交时的字段名称</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>表单控件的值或选项提交值</td>
+</tr>
+</tbody></table>
+<p>注意：<code>input</code>、<code>img</code>、<code>meta</code> 等属于 <strong>空元素（void elements）</strong>，没有包裹内容的结束标签。Vue 模板中常写为 <code>&lt;input /&gt;</code>，标准 HTML 中 <code>&lt;input&gt;</code> 即可。</p>
+<h2 id="三、标准-HTML-文档结构"><a href="#三、标准-HTML-文档结构" class="headerlink" title="三、标准 HTML 文档结构"></a>三、标准 HTML 文档结构</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">&quot;zh-CN&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">title</span>&gt;</span>我的个人博客<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">h1</span>&gt;</span>欢迎来到我的博客<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">p</span>&gt;</span>记录我的前端学习历程。<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&lt;!DOCTYPE html&gt;</code></td>
+<td>声明使用现代 HTML 标准，避免浏览器进入怪异模式；不是普通元素</td>
+</tr>
+<tr>
+<td><code>&lt;html lang=&quot;zh-CN&quot;&gt;</code></td>
+<td>文档根元素；<code>lang</code> 声明主要语言</td>
+</tr>
+<tr>
+<td><code>&lt;head&gt;</code></td>
+<td>文档元信息（编码、视口、标题、资源等）</td>
+</tr>
+<tr>
+<td><code>&lt;meta charset=&quot;UTF-8&quot;&gt;</code></td>
+<td>指定字符编码</td>
+</tr>
+<tr>
+<td><code>viewport</code> 元信息</td>
+<td>便于正确适配移动设备视口</td>
+</tr>
+<tr>
+<td><code>&lt;title&gt;</code></td>
+<td>浏览器标签页标题，不是正文标题</td>
+</tr>
+<tr>
+<td><code>&lt;body&gt;</code></td>
+<td>网页正文的主要内容</td>
+</tr>
+</tbody></table>
+<p>区别：<code>&lt;title&gt;</code> 决定浏览器标签页标题，<code>&lt;h1&gt;</code> 是网页正文中的一级标题。</p>
+<p><code>&lt;style&gt;</code> 可以包含 CSS；<code>&lt;script&gt;</code> 可以包含或引用 JavaScript。它们与负责文档结构的 HTML 配合工作。</p>
+<h2 id="四、语义化标签与页面组织"><a href="#四、语义化标签与页面组织" class="headerlink" title="四、语义化标签与页面组织"></a>四、语义化标签与页面组织</h2><p>与全部使用 <code>div</code> 相比，语义化标签能更清楚地表达内容职责：</p>
+<table>
+<thead>
+<tr>
+<th>标签</th>
+<th>语义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>header</code></td>
+<td>页面或区域的头部</td>
+</tr>
+<tr>
+<td><code>nav</code></td>
+<td>导航链接区域</td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td>文档的主要内容</td>
+</tr>
+<tr>
+<td><code>section</code></td>
+<td>具有独立主题的内容分区</td>
+</tr>
+<tr>
+<td><code>article</code></td>
+<td>相对独立、可单独理解的内容（如博客文章）</td>
+</tr>
+<tr>
+<td><code>aside</code></td>
+<td>与主要内容间接相关的补充区域</td>
+</tr>
+<tr>
+<td><code>footer</code></td>
+<td>页面或区域的尾部</td>
+</tr>
+</tbody></table>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">header</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">h1</span>&gt;</span>我的技术博客<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">nav</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;#articles&quot;</span>&gt;</span>文章<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;#about&quot;</span>&gt;</span>关于我<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">nav</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">header</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">main</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">section</span> <span class="attr">id</span>=<span class="string">&quot;articles&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h2</span>&gt;</span>技术文章<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">article</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">h3</span>&gt;</span>HTML 学习笔记<span class="tag">&lt;/<span class="name">h3</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>这是一篇入门文章。<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">article</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">section</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">section</span> <span class="attr">id</span>=<span class="string">&quot;about&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">h2</span>&gt;</span>关于我<span class="tag">&lt;/<span class="name">h2</span>&gt;</span><span class="tag">&lt;/<span class="name">section</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">main</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">footer</span>&gt;</span><span class="tag">&lt;<span class="name">p</span>&gt;</span>我的个人博客<span class="tag">&lt;/<span class="name">p</span>&gt;</span><span class="tag">&lt;/<span class="name">footer</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>锚点跳转</strong>：<code>&lt;a href=&quot;#about&quot;&gt;</code> 会定位到当前文档中 <code>id=&quot;about&quot;</code> 的元素附近。</p>
+<p><strong>语义 ≠ 视觉位置</strong>：<code>aside</code> 不会自动出现在右侧，<code>section</code> 不会自动带边框；布局由 CSS 控制。</p>
+<h2 id="五、HTML-嵌套与-DOM-树"><a href="#五、HTML-嵌套与-DOM-树" class="headerlink" title="五、HTML 嵌套与 DOM 树"></a>五、HTML 嵌套与 DOM 树</h2><h3 id="1-父子、兄弟、祖先、后代"><a href="#1-父子、兄弟、祖先、后代" class="headerlink" title="1. 父子、兄弟、祖先、后代"></a>1. 父子、兄弟、祖先、后代</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">section</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h2</span>&gt;</span>学习笔记<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">button</span>&gt;</span>按钮 A<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">section</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">button</span>&gt;</span>按钮 B<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>简化元素树：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">div</span><br><span class="line">├── section</span><br><span class="line">│   ├── h2</span><br><span class="line">│   └── div</span><br><span class="line">│       └── button A</span><br><span class="line">└── button B</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>父子元素</strong>：直接包含，例如内层 <code>div</code> 是按钮 A 的父元素。</li>
+<li><strong>兄弟元素</strong>：直接父元素相同，例如 <code>section</code> 与按钮 B。</li>
+<li><strong>祖先与后代</strong>：允许隔多层，例如 <code>section</code> 是按钮 A 的祖先，按钮 A 是它的后代。</li>
+<li><strong>父元素一定是祖先元素；祖先元素不一定是直接父元素。</strong></li>
+</ul>
+<p>把按钮 B 移到 <code>&lt;/section&gt;</code> <strong>之前</strong>，就会改变它的父节点，使它成为 <code>section</code> 的直接子元素。</p>
+<h3 id="2-HTML-与-DOM-的区别"><a href="#2-HTML-与-DOM-的区别" class="headerlink" title="2. HTML 与 DOM 的区别"></a>2. HTML 与 DOM 的区别</h3><ul>
+<li><strong>HTML</strong>：用标签编写的标记文本。</li>
+<li><strong>DOM（Document Object Model，文档对象模型）</strong>：浏览器为文档建立的对象结构，供 JavaScript 查询、修改节点等。</li>
+</ul>
+<p>除了元素节点，DOM 还有<strong>文本节点、注释节点、文档节点</strong>等：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>你好 <span class="tag">&lt;<span class="name">strong</span>&gt;</span>Vue<span class="tag">&lt;/<span class="name">strong</span>&gt;</span>！<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">p</span><br><span class="line">├── #text &quot;你好 &quot;</span><br><span class="line">├── strong</span><br><span class="line">│   └── #text &quot;Vue&quot;</span><br><span class="line">└── #text &quot;！&quot;</span><br></pre></td></tr></table></figure>
+
+<p>因此，DOM 节点数不等于 HTML 标签数；空格、换行有时也会形成文本节点。</p>
+<p>JavaScript 可以使用 DOM API 操作页面：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">h1</span> <span class="attr">id</span>=<span class="string">&quot;title&quot;</span>&gt;</span>Hello World!<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;title&#x27;</span>).<span class="property">textContent</span> = <span class="string">&#x27;Hello Vue!&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>getElementById()</code>：按 <code>id</code> 查找元素。</li>
+<li><code>textContent</code>：读取或设置文本内容。</li>
+<li><code>element.children</code>：直接<strong>子元素</strong>集合。</li>
+<li><code>element.childNodes</code>：直接<strong>子节点</strong>集合（可能包含文本、注释）。</li>
+</ul>
+<h3 id="3-嵌套关系对-CSS-的影响（预习）"><a href="#3-嵌套关系对-CSS-的影响（预习）" class="headerlink" title="3. 嵌套关系对 CSS 的影响（预习）"></a>3. 嵌套关系对 CSS 的影响（预习）</h3><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">section</span> <span class="selector-tag">button</span> &#123; <span class="attribute">color</span>: red; &#125;  <span class="comment">/* section 内的所有 button 后代 */</span></span><br><span class="line"><span class="selector-tag">section</span> &gt; <span class="selector-tag">button</span> &#123; <span class="attribute">color</span>: red; &#125; <span class="comment">/* 只有 section 的直接子元素 button */</span></span><br></pre></td></tr></table></figure>
+
+<p>前面的按钮 A 虽然与 <code>section</code> 隔着一个 <code>div</code>，仍会匹配 <code>section button</code>；按钮 B 在 <code>section</code> 外，两条规则都不匹配。</p>
+<p><strong>不要根据代码在视觉上的“上下位置”判断 CSS 是否匹配，要看 DOM 的包含关系。</strong></p>
+<p>还要遵守 HTML 元素的内容规则。例如，<code>p</code> 元素不能包含 <code>div</code>；浏览器可能会自动修正不合法嵌套，导致 DOM 与源码不一致。</p>
+<h2 id="六、HTML-表单与用户输入"><a href="#六、HTML-表单与用户输入" class="headerlink" title="六、HTML 表单与用户输入"></a>六、HTML 表单与用户输入</h2><h3 id="1-基础表单"><a href="#1-基础表单" class="headerlink" title="1. 基础表单"></a>1. 基础表单</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">form</span> <span class="attr">action</span>=<span class="string">&quot;/register&quot;</span> <span class="attr">method</span>=<span class="string">&quot;post&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">&quot;user_email&quot;</span>&gt;</span>邮箱：<span class="tag">&lt;/<span class="name">label</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;email&quot;</span> <span class="attr">id</span>=<span class="string">&quot;user_email&quot;</span> <span class="attr">name</span>=<span class="string">&quot;email&quot;</span> <span class="attr">required</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">&quot;submit&quot;</span>&gt;</span>提交<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">&quot;reset&quot;</span>&gt;</span>重置<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>form</code>：组织一组可提交的表单控件。</li>
+<li><code>action</code>：原生表单提交目标地址。</li>
+<li><code>method</code>：HTTP 提交方法；常见为 <code>get</code> 或 <code>post</code>。</li>
+<li><code>label for=&quot;user_email&quot;</code> 与 <code>input id=&quot;user_email&quot;</code> 对应；点击标签可聚焦对应输入框。</li>
+<li><code>required</code>：浏览器进行基础必填检查，但<strong>后端仍要重新验证</strong>。</li>
+</ul>
+<p>原生表单默认编码不是 JSON；Django 接收传统 POST 表单字段时通常可以通过 <code>request.POST.get(&#39;email&#39;)</code> 获取。真实 Django POST 表单还需要正确处理 CSRF 保护。</p>
+<h3 id="2-id、name、value：最容易混淆的三个属性"><a href="#2-id、name、value：最容易混淆的三个属性" class="headerlink" title="2. id、name、value：最容易混淆的三个属性"></a>2. <code>id</code>、<code>name</code>、<code>value</code>：最容易混淆的三个属性</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;email&quot;</span> <span class="attr">id</span>=<span class="string">&quot;user_email&quot;</span> <span class="attr">name</span>=<span class="string">&quot;email&quot;</span> <span class="attr">value</span>=<span class="string">&quot;a@example.com&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>作用</th>
+<th>此例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>在文档中标识元素，供 <code>label for</code>、DOM 查询等使用</td>
+<td><code>user_email</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>正常表单提交时的<strong>字段名</strong></td>
+<td><code>email</code></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>输入控件当前&#x2F;初始值（具体行为随控件类型而异）</td>
+<td><code>a@example.com</code></td>
+</tr>
+</tbody></table>
+<p>提交字段可以类比为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">&quot;email&quot;</span>: <span class="string">&quot;a@example.com&quot;</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因此 <code>id</code> 和 <code>name</code> <strong>不必相同</strong>；改变 <code>id</code> 不会自动改变字段名。<code>name</code> 可以重复（例如一组同名 <code>radio</code>）。</p>
+<p><strong>注意 Vue + Axios 的区别</strong>：如果使用 JavaScript 自己构造 JSON，请求体字段名来自 JS 对象的键，不一定来自 HTML 的 <code>name</code>。</p>
+<h3 id="3-常见表单控件"><a href="#3-常见表单控件" class="headerlink" title="3. 常见表单控件"></a>3. 常见表单控件</h3><table>
+<thead>
+<tr>
+<th>写法</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&lt;input type=&quot;text&quot;&gt;</code></td>
+<td>单行文本</td>
+</tr>
+<tr>
+<td><code>&lt;input type=&quot;password&quot;&gt;</code></td>
+<td>遮蔽显示输入字符（<strong>不是加密</strong>）</td>
+</tr>
+<tr>
+<td><code>&lt;input type=&quot;email&quot;&gt;</code></td>
+<td>基本邮箱格式检查</td>
+</tr>
+<tr>
+<td><code>&lt;input type=&quot;number&quot;&gt;</code></td>
+<td>数字输入控件</td>
+</tr>
+<tr>
+<td><code>&lt;input type=&quot;radio&quot;&gt;</code></td>
+<td>单选项；同 <code>name</code> 的单选项属于一组</td>
+</tr>
+<tr>
+<td><code>&lt;input type=&quot;checkbox&quot;&gt;</code></td>
+<td>复选项；可选多个</td>
+</tr>
+<tr>
+<td><code>&lt;select&gt;&lt;option&gt;...&lt;/option&gt;&lt;/select&gt;</code></td>
+<td>下拉菜单</td>
+</tr>
+<tr>
+<td><code>&lt;textarea&gt;&lt;/textarea&gt;</code></td>
+<td>多行文本</td>
+</tr>
+<tr>
+<td><code>&lt;button type=&quot;submit&quot;&gt;</code></td>
+<td>提交表单</td>
+</tr>
+<tr>
+<td><code>&lt;button type=&quot;reset&quot;&gt;</code></td>
+<td>重置表单控件到初始值</td>
+</tr>
+<tr>
+<td><code>&lt;button type=&quot;button&quot;&gt;</code></td>
+<td>普通按钮，无默认提交行为</td>
+</tr>
+</tbody></table>
+<p>注意：在 <code>form</code> 内部，<code>button</code> 不写 <code>type</code> 时一般默认为提交按钮，因此推荐明确设置。</p>
+<h3 id="4-下拉框中的-name-与-value"><a href="#4-下拉框中的-name-与-value" class="headerlink" title="4. 下拉框中的 name 与 value"></a>4. 下拉框中的 <code>name</code> 与 <code>value</code></h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">&quot;direction&quot;</span>&gt;</span>学习方向：<span class="tag">&lt;/<span class="name">label</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;direction&quot;</span> <span class="attr">name</span>=<span class="string">&quot;direction&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;frontend&quot;</span>&gt;</span>前端开发<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;backend&quot;</span>&gt;</span>后端开发<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;ai&quot;</span> <span class="attr">selected</span>&gt;</span>人工智能<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>界面上显示“人工智能”，实际提交字段是 <code>direction=ai</code>。<code>selected</code> 可声明默认选中的选项。在 Vue 中通常改用 <code>v-model</code> 管理选中值。</p>
+<h3 id="5-单选、复选和必填"><a href="#5-单选、复选和必填" class="headerlink" title="5. 单选、复选和必填"></a>5. 单选、复选和必填</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">label</span>&gt;</span><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;radio&quot;</span> <span class="attr">name</span>=<span class="string">&quot;level&quot;</span> <span class="attr">value</span>=<span class="string">&quot;beginner&quot;</span>&gt;</span> 初学者<span class="tag">&lt;/<span class="name">label</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">label</span>&gt;</span><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;radio&quot;</span> <span class="attr">name</span>=<span class="string">&quot;level&quot;</span> <span class="attr">value</span>=<span class="string">&quot;advanced&quot;</span>&gt;</span> 进阶者<span class="tag">&lt;/<span class="name">label</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">label</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;checkbox&quot;</span> <span class="attr">name</span>=<span class="string">&quot;agree&quot;</span> <span class="attr">value</span>=<span class="string">&quot;yes&quot;</span> <span class="attr">required</span>&gt;</span></span><br><span class="line">  我已阅读并同意用户协议</span><br><span class="line"><span class="tag">&lt;/<span class="name">label</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>对复选框使用 <code>required</code>，可要求它被选中后才通过浏览器的正常提交验证。</p>
+<h3 id="6-前后端验证的边界"><a href="#6-前后端验证的边界" class="headerlink" title="6. 前后端验证的边界"></a>6. 前后端验证的边界</h3><ul>
+<li><code>required</code>：确保相应控件不为空（或单选&#x2F;复选组符合基本约束）。</li>
+<li><code>type=&quot;email&quot;</code>：仅检查基础格式，<strong>不能证明邮箱真实存在</strong>。</li>
+<li>两次密码是否一致：<code>required</code> <strong>不会自动比较</strong>，需要 JS&#x2F;Vue 逻辑与后端验证。</li>
+<li>密码：不能仅因使用 <code>type=&quot;password&quot;</code> 就认为安全；生产环境应使用 HTTPS、服务端安全验证与密码哈希存储。</li>
+<li>原生表单 <code>GET</code> 会把字段编码到 URL 查询串中；密码等敏感数据不应该用 GET 提交。</li>
+</ul>
+<h2 id="七、Vue-官方演练场与-HTML-的关系"><a href="#七、Vue-官方演练场与-HTML-的关系" class="headerlink" title="七、Vue 官方演练场与 HTML 的关系"></a>七、Vue 官方演练场与 HTML 的关系</h2><p>Vue 官方演练场：<a target="_blank" rel="noopener" href="https://play.vuejs.org/">https://play.vuejs.org/</a></p>
+<p>Vue <strong>单文件组件（SFC）</strong> 的典型结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;script setup&gt;</span><br><span class="line">// JavaScript / Vue 组件逻辑</span><br><span class="line">&lt;/script&gt;</span><br><span class="line"></span><br><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;h1&gt;我的博客&lt;/h1&gt;</span><br><span class="line">  &lt;p&gt;这是 Vue 模板中的 HTML 风格结构。&lt;/p&gt;</span><br><span class="line">&lt;/template&gt;</span><br><span class="line"></span><br><span class="line">&lt;style scoped&gt;</span><br><span class="line">/* 组件样式 */</span><br><span class="line">&lt;/style&gt;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&lt;script setup&gt;</code></td>
+<td>编写 Vue&#x2F;JavaScript 逻辑</td>
+</tr>
+<tr>
+<td><code>&lt;template&gt;</code></td>
+<td>声明组件要显示的页面结构</td>
+</tr>
+<tr>
+<td><code>&lt;style scoped&gt;</code></td>
+<td>当前组件的样式（具有 Vue 的作用域处理）</td>
+</tr>
+</tbody></table>
+<p>不需要在 <code>App.vue</code> 里重复写 <code>&lt;!DOCTYPE html&gt;</code>、<code>html</code>、<code>head</code>、<code>body</code>：完整网页入口由环境中的 HTML 文件提供。</p>
+<p>典型 Vite + Vue 项目：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">frontend/</span><br><span class="line">├── index.html</span><br><span class="line">├── package.json</span><br><span class="line">└── src/</span><br><span class="line">    ├── main.js</span><br><span class="line">    └── App.vue</span><br></pre></td></tr></table></figure>
+
+<p><code>index.html</code> 中有 Vue 的挂载容器：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;app&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">&quot;module&quot;</span> <span class="attr">src</span>=<span class="string">&quot;/src/main.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>main.js</code> 负责创建和挂载应用：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; createApp &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./App.vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createApp</span>(<span class="title class_">App</span>).<span class="title function_">mount</span>(<span class="string">&#x27;#app&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>运行逻辑：<strong>浏览器加载 <code>index.html</code> → 执行 <code>main.js</code> → 挂载 Vue 应用 → 渲染 <code>App.vue</code></strong>。</p>
+<p>Vue 组件中可以写：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;form @submit.prevent&gt;</span><br><span class="line">    &lt;label for=&quot;nickname&quot;&gt;昵称：&lt;/label&gt;</span><br><span class="line">    &lt;input id=&quot;nickname&quot; name=&quot;nickname&quot; required&gt;</span><br><span class="line">    &lt;button type=&quot;submit&quot;&gt;提交&lt;/button&gt;</span><br><span class="line">  &lt;/form&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>@submit.prevent</code> 是 <strong>Vue 事件修饰语法，不是标准 HTML</strong>；它阻止表单默认提交和跳转。<strong>没有额外处理函数时，并不会把数据发送给后端。</strong></p>
+<h2 id="八、综合实战：个人博客首页（App-vue）"><a href="#八、综合实战：个人博客首页（App-vue）" class="headerlink" title="八、综合实战：个人博客首页（App.vue）"></a>八、综合实战：个人博客首页（App.vue）</h2><p>目标：用 HTML 语义标签组合导航、个人介绍、文章、侧栏和留言表单。以下代码可以<strong>完整复制到 Vue 官方演练场的 <code>App.vue</code></strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;header&gt;</span><br><span class="line">    &lt;h1&gt;我的技术博客&lt;/h1&gt;</span><br><span class="line">    &lt;p&gt;记录前端与编程学习&lt;/p&gt;</span><br><span class="line">    &lt;nav&gt;</span><br><span class="line">      &lt;a href=&quot;#about&quot;&gt;关于我&lt;/a&gt;</span><br><span class="line">      &lt;a href=&quot;#articles&quot;&gt;技术文章&lt;/a&gt;</span><br><span class="line">      &lt;a href=&quot;#contact&quot;&gt;留言交流&lt;/a&gt;</span><br><span class="line">    &lt;/nav&gt;</span><br><span class="line">  &lt;/header&gt;</span><br><span class="line"></span><br><span class="line">  &lt;main&gt;</span><br><span class="line">    &lt;section id=&quot;about&quot;&gt;</span><br><span class="line">      &lt;h2&gt;关于我&lt;/h2&gt;</span><br><span class="line">      &lt;p&gt;我正在学习 HTML、CSS、JavaScript 和 Vue 3。&lt;/p&gt;</span><br><span class="line">      &lt;h3&gt;技术方向&lt;/h3&gt;</span><br><span class="line">      &lt;ul&gt;</span><br><span class="line">        &lt;li&gt;前端开发&lt;/li&gt;</span><br><span class="line">        &lt;li&gt;Python 后端&lt;/li&gt;</span><br><span class="line">        &lt;li&gt;人工智能&lt;/li&gt;</span><br><span class="line">      &lt;/ul&gt;</span><br><span class="line">    &lt;/section&gt;</span><br><span class="line"></span><br><span class="line">    &lt;section id=&quot;articles&quot;&gt;</span><br><span class="line">      &lt;h2&gt;最新文章&lt;/h2&gt;</span><br><span class="line">      &lt;article&gt;</span><br><span class="line">        &lt;h3&gt;HTML 入门笔记&lt;/h3&gt;</span><br><span class="line">        &lt;p&gt;学习标签、文档结构、DOM 树和表单。&lt;/p&gt;</span><br><span class="line">        &lt;a href=&quot;#contact&quot;&gt;交流讨论&lt;/a&gt;</span><br><span class="line">      &lt;/article&gt;</span><br><span class="line">      &lt;article&gt;</span><br><span class="line">        &lt;h3&gt;CSS 学习计划&lt;/h3&gt;</span><br><span class="line">        &lt;p&gt;接下来学习选择器、盒模型、Flex 和 Grid。&lt;/p&gt;</span><br><span class="line">        &lt;a href=&quot;#contact&quot;&gt;交流讨论&lt;/a&gt;</span><br><span class="line">      &lt;/article&gt;</span><br><span class="line">    &lt;/section&gt;</span><br><span class="line"></span><br><span class="line">    &lt;section id=&quot;contact&quot;&gt;</span><br><span class="line">      &lt;h2&gt;留言交流&lt;/h2&gt;</span><br><span class="line">      &lt;form @submit.prevent&gt;</span><br><span class="line">        &lt;div&gt;</span><br><span class="line">          &lt;label for=&quot;nickname&quot;&gt;昵称：&lt;/label&gt;</span><br><span class="line">          &lt;input id=&quot;nickname&quot; name=&quot;nickname&quot; type=&quot;text&quot; required&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">        &lt;div&gt;</span><br><span class="line">          &lt;label for=&quot;email&quot;&gt;邮箱：&lt;/label&gt;</span><br><span class="line">          &lt;input id=&quot;email&quot; name=&quot;email&quot; type=&quot;email&quot; required&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">        &lt;div&gt;</span><br><span class="line">          &lt;label for=&quot;message&quot;&gt;留言：&lt;/label&gt;</span><br><span class="line">          &lt;textarea id=&quot;message&quot; name=&quot;message&quot; rows=&quot;4&quot; required&gt;&lt;/textarea&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">        &lt;button type=&quot;submit&quot;&gt;提交留言&lt;/button&gt;</span><br><span class="line">        &lt;button type=&quot;reset&quot;&gt;重置&lt;/button&gt;</span><br><span class="line">      &lt;/form&gt;</span><br><span class="line">    &lt;/section&gt;</span><br><span class="line">  &lt;/main&gt;</span><br><span class="line"></span><br><span class="line">  &lt;aside&gt;</span><br><span class="line">    &lt;h2&gt;学习计划&lt;/h2&gt;</span><br><span class="line">    &lt;ul&gt;</span><br><span class="line">      &lt;li&gt;HTML 基础&lt;/li&gt;</span><br><span class="line">      &lt;li&gt;CSS 页面布局&lt;/li&gt;</span><br><span class="line">      &lt;li&gt;JavaScript 交互&lt;/li&gt;</span><br><span class="line">      &lt;li&gt;Vue 3 组件开发&lt;/li&gt;</span><br><span class="line">    &lt;/ul&gt;</span><br><span class="line">  &lt;/aside&gt;</span><br><span class="line"></span><br><span class="line">  &lt;footer&gt;</span><br><span class="line">    &lt;p&gt;2026 我的技术博客&lt;/p&gt;</span><br><span class="line">  &lt;/footer&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>此版本<strong>只展示结构与浏览器内置表单行为</strong>：未使用 CSS 美化，也未实现真实的留言保存。后面学习 CSS、JavaScript 和 Vue 后，可以逐步补齐页面布局和交互功能。</p>
+<h2 id="九、常见易错点"><a href="#九、常见易错点" class="headerlink" title="九、常见易错点"></a>九、常见易错点</h2><ol>
+<li><strong>HTML 元素不等于标签</strong>：完整元素包含开始标签、内容和结束标签（空元素除外）。</li>
+<li><strong><code>id</code> 不等于 <code>name</code></strong>：前者用于定位元素，后者主要是表单字段名。</li>
+<li><strong><code>label for</code> 对应 <code>input id</code></strong>，不是 <code>input name</code>。</li>
+<li><strong><code>section button</code> 与 <code>section &gt; button</code> 不同</strong>：前者选所有后代，后者只选直接子元素。</li>
+<li><strong><code>button type=&quot;submit&quot;</code> 不等于已经实现登录</strong>：还需要提交处理及后端逻辑。</li>
+<li><strong><code>required</code> 不等于完整验证</strong>：后端必须重新验证。</li>
+<li><strong><code>type=&quot;password&quot;</code> 不等于加密</strong>：它主要负责输入显示遮蔽。</li>
+<li><strong><code>&lt;title&gt;</code> 与 <code>&lt;h1&gt;</code> 不同</strong>：分别是标签页标题和正文标题。</li>
+<li><strong>Vue 的 <code>&lt;template&gt;</code> 不是完整 HTML 文档</strong>：网页入口一般由 <code>index.html</code> 提供。</li>
+<li><strong>语义化标签不负责复杂布局</strong>：<code>header</code>、<code>main</code>、<code>aside</code> 的位置主要靠 CSS。</li>
+</ol>
+<h2 id="十、学习小结"><a href="#十、学习小结" class="headerlink" title="十、学习小结"></a>十、学习小结</h2><p>完成 HTML 阶段后，应具备以下能力：</p>
+<ul>
+<li>能读懂网页的标签、属性和语义结构。</li>
+<li>能分析元素的父子、兄弟、祖先和后代关系。</li>
+<li>理解 HTML 与 DOM 的区别，知道 JS 可以通过 DOM API 操作页面。</li>
+<li>能编写包含 <code>label</code>、<code>input</code>、<code>select</code>、<code>textarea</code> 的基本表单。</li>
+<li>能理解 <code>id</code>、<code>name</code>、<code>value</code> 在前端与后端数据传递中的不同职责。</li>
+<li>能区分完整 HTML 文档与 Vue <code>App.vue</code> 组件。</li>
+<li>能独立用 HTML 搭出个人博客首页的基础骨架。</li>
+</ul>
+<p><strong>下一阶段：CSS</strong>，重点学习选择器、盒模型、Flexbox、Grid 和响应式布局，把已有的 HTML 结构变成真正可用的网页界面。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://inklovage.github.io">InkLovage</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://inklovage.github.io/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">https://inklovage.github.io/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://inklovage.github.io" target="_blank">Ink Lovage</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/HTML/">HTML</a><a class="post-meta__tags" href="/tags/%E5%89%8D%E7%AB%AF%E5%9F%BA%E7%A1%80/">前端基础</a><a class="post-meta__tags" href="/tags/Vue3/">Vue3</a></div><div class="post-share"><div class="social-share" data-image="/img/xiamu.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/09/05/API%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AC%94%E8%AE%B0/" title="API 基础知识笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">API 基础知识笔记</div></div><div class="info-2"><div class="info-item-1">API 基础知识一、API 的定义API（Application Programming Interface），即应用程序编程接口。 API 是软件对外提供的一组接口约定，使开发者能够调用已有功能，而无需了解其内部实现。 核心思想：封装实现，暴露接口。   二、API 的常见类型1. 库与框架 API例如：  C++：sort() Python：math.sqrt() Vue：ref()、reactive()  2. Web API实现不同程序之间的网络通信。 例如： GET /api/users/1 服务器返回 JSON： 1234&#123;  &quot;id&quot;: 1,  &quot;name&quot;: &quot;Alice&quot;&#125;  三、HTTP 常见请求方法   方法 作用    GET 获取资源   POST 提交或创建资源   PUT 整体替换资源   PATCH 部分修改资源   DELETE 删除资源   四、Vue 中的 APIOptions API： 使用 data、methods 等选项组织组件逻辑。 Composition...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/xiamu.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">InkLovage</div><div class="author-info-description">欢迎来到墨江离的个人博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">10</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/InkLovage"><i class="fab fa-github"></i><span>我的 GitHub</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Ink Lovage 的个人博客！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81HTML-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">一、HTML 是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%A0%87%E7%AD%BE%E3%80%81%E5%85%83%E7%B4%A0%E3%80%81%E5%B1%9E%E6%80%A7"><span class="toc-number">2.</span> <span class="toc-text">二、标签、元素、属性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%87%E7%AD%BE%E4%B8%8E%E5%85%83%E7%B4%A0"><span class="toc-number">2.1.</span> <span class="toc-text">1. 标签与元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%B8%B8%E8%A7%81%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5"><span class="toc-number">2.2.</span> <span class="toc-text">2. 常见标签速查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-HTML-%E5%B1%9E%E6%80%A7"><span class="toc-number">2.3.</span> <span class="toc-text">3. HTML 属性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%A0%87%E5%87%86-HTML-%E6%96%87%E6%A1%A3%E7%BB%93%E6%9E%84"><span class="toc-number">3.</span> <span class="toc-text">三、标准 HTML 文档结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E8%AF%AD%E4%B9%89%E5%8C%96%E6%A0%87%E7%AD%BE%E4%B8%8E%E9%A1%B5%E9%9D%A2%E7%BB%84%E7%BB%87"><span class="toc-number">4.</span> <span class="toc-text">四、语义化标签与页面组织</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81HTML-%E5%B5%8C%E5%A5%97%E4%B8%8E-DOM-%E6%A0%91"><span class="toc-number">5.</span> <span class="toc-text">五、HTML 嵌套与 DOM 树</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%88%B6%E5%AD%90%E3%80%81%E5%85%84%E5%BC%9F%E3%80%81%E7%A5%96%E5%85%88%E3%80%81%E5%90%8E%E4%BB%A3"><span class="toc-number">5.1.</span> <span class="toc-text">1. 父子、兄弟、祖先、后代</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-HTML-%E4%B8%8E-DOM-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">5.2.</span> <span class="toc-text">2. HTML 与 DOM 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%B5%8C%E5%A5%97%E5%85%B3%E7%B3%BB%E5%AF%B9-CSS-%E7%9A%84%E5%BD%B1%E5%93%8D%EF%BC%88%E9%A2%84%E4%B9%A0%EF%BC%89"><span class="toc-number">5.3.</span> <span class="toc-text">3. 嵌套关系对 CSS 的影响（预习）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81HTML-%E8%A1%A8%E5%8D%95%E4%B8%8E%E7%94%A8%E6%88%B7%E8%BE%93%E5%85%A5"><span class="toc-number">6.</span> <span class="toc-text">六、HTML 表单与用户输入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%9F%BA%E7%A1%80%E8%A1%A8%E5%8D%95"><span class="toc-number">6.1.</span> <span class="toc-text">1. 基础表单</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-id%E3%80%81name%E3%80%81value%EF%BC%9A%E6%9C%80%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E4%B8%89%E4%B8%AA%E5%B1%9E%E6%80%A7"><span class="toc-number">6.2.</span> <span class="toc-text">2. id、name、value：最容易混淆的三个属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%B8%B8%E8%A7%81%E8%A1%A8%E5%8D%95%E6%8E%A7%E4%BB%B6"><span class="toc-number">6.3.</span> <span class="toc-text">3. 常见表单控件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E4%B8%8B%E6%8B%89%E6%A1%86%E4%B8%AD%E7%9A%84-name-%E4%B8%8E-value"><span class="toc-number">6.4.</span> <span class="toc-text">4. 下拉框中的 name 与 value</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%8D%95%E9%80%89%E3%80%81%E5%A4%8D%E9%80%89%E5%92%8C%E5%BF%85%E5%A1%AB"><span class="toc-number">6.5.</span> <span class="toc-text">5. 单选、复选和必填</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%89%8D%E5%90%8E%E7%AB%AF%E9%AA%8C%E8%AF%81%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-number">6.6.</span> <span class="toc-text">6. 前后端验证的边界</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81Vue-%E5%AE%98%E6%96%B9%E6%BC%94%E7%BB%83%E5%9C%BA%E4%B8%8E-HTML-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-number">7.</span> <span class="toc-text">七、Vue 官方演练场与 HTML 的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%EF%BC%9A%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E9%A6%96%E9%A1%B5%EF%BC%88App-vue%EF%BC%89"><span class="toc-number">8.</span> <span class="toc-text">八、综合实战：个人博客首页（App.vue）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%B8%B8%E8%A7%81%E6%98%93%E9%94%99%E7%82%B9"><span class="toc-number">9.</span> <span class="toc-text">九、常见易错点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E5%AD%A6%E4%B9%A0%E5%B0%8F%E7%BB%93"><span class="toc-number">10.</span> <span class="toc-text">十、学习小结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/11/HTML%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战">HTML 基础学习笔记：从标签到 DOM、表单与 Vue 实战</a><time datetime="2026-09-10T16:00:00.000Z" title="发表于 2026-09-11 00:00:00">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/05/API%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AC%94%E8%AE%B0/" title="API 基础知识笔记">API 基础知识笔记</a><time datetime="2026-09-04T16:00:00.000Z" title="发表于 2026-09-05 00:00:00">2026-09-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/02/Django-%E5%90%8E%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%AC%94%E8%AE%B0/" title="Django 后端初始化与基础环境配置笔记">Django 后端初始化与基础环境配置笔记</a><time datetime="2026-09-01T16:00:00.000Z" title="发表于 2026-09-02 00:00:00">2026-09-02</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/09/01/JWT-%E5%8F%8C-Token-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%97%A0%E6%84%9F%E5%88%B7%E6%96%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="JWT 双 Token 机制与无感刷新原理解析">JWT 双 Token 机制与无感刷新原理解析</a><time datetime="2026-08-31T16:00:00.000Z" title="发表于 2026-09-01 00:00:00">2026-09-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/%E4%BB%8E%E6%B3%B0%E5%9D%A6%E5%B0%BC%E5%85%8B%E5%8F%B7%E5%AD%A6%E4%B9%A0%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%AE%9E%E8%B7%B5%E7%AC%94%E8%AE%B0/" title="从泰坦尼克号学习机器学习实践笔记">从泰坦尼克号学习机器学习实践笔记</a><time datetime="2026-08-14T15:41:43.000Z" title="发表于 2026-08-14 23:41:43">2026-08-14</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By InkLovage</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.1</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.1"></script><script src="/js/main.js?v=5.6.1"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
